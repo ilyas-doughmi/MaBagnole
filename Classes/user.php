@@ -48,16 +48,17 @@ class user
             return false;
         }
 
-            session_start();
-        
+        session_start();
+
         $_SESSION["id"] = $result["id"];
         $_SESSION["role"] = $result["role"];
-
-
-        
-
         return true;
     }
 
-    public function logout() {}
+    public function logout()
+    {
+        session_start();
+        session_unset();
+        session_destroy();
+    }
 }
