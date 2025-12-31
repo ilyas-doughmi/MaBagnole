@@ -1,11 +1,8 @@
 <?php
 session_start();
-// Mock Data
-$vehicles = [
-    ['id' => 1, 'marque' => 'Volvo', 'modele' => 'V60', 'categorie' => 'Confort', 'prix' => 75, 'status' => 'Disponible'],
-    ['id' => 2, 'marque' => 'BMW', 'modele' => 'X5', 'categorie' => 'SUV', 'prix' => 150, 'status' => 'Loué'],
-    ['id' => 3, 'marque' => 'Peugeot', 'modele' => '208', 'categorie' => 'Citadine', 'prix' => 40, 'status' => 'Maintenance'],
-];
+require_once(__DIR__. "/../../includes/vehicles/vehicles_data.php");
+$vehicles_data = $vehicles["vehicles"];
+
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -61,16 +58,16 @@ $vehicles = [
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <?php foreach($vehicles as $v): ?>
+                        <?php foreach($vehicles_data as $v): ?>
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold text-gray-500">#<?= $v['id'] ?></td>
-                            <td class="p-4 font-bold"><?= $v['marque'] . ' ' . $v['modele'] ?></td>
-                            <td class="p-4 text-sm"><?= $v['categorie'] ?></td>
-                            <td class="p-4 font-bold text-locar-orange"><?= $v['prix'] ?>$</td>
+                            <td class="p-4 font-bold text-gray-500">#<?= $v['vehicle_id'] ?></td>
+                            <td class="p-4 font-bold"><?= $v['brand'] . ' ' . $v['model'] ?></td>
+                            <td class="p-4 text-sm"><?= $v['category_name'] ?></td>
+                            <td class="p-4 font-bold text-locar-orange"><?= $v['price_per_day'] ?>$</td>
                             <td class="p-4">
                                 <span class="px-2 py-1 rounded text-xs font-bold uppercase 
-                                    <?= $v['status'] == 'Disponible' ? 'bg-green-100 text-green-600' : ($v['status'] == 'Loué' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600') ?>">
-                                    <?= $v['status'] ?>
+                                    <?= $v['is_available'] ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' ?>">
+                                    <?= $v['is_available'] ? 'Disponible' : 'Indisponible' ?>
                                 </span>
                             </td>
                             <td class="p-4 text-right space-x-2">
