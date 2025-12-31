@@ -1,11 +1,14 @@
 <?php
 // pages/submit_review.php
-session_start();
+require_once '../includes/guard.php';
+require_login();
 
+/*
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
+*/
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $vehicle_id = $_POST['vehicle_id'];

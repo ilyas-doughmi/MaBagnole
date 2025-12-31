@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once '../../includes/guard.php';
+require_login();
 // Mock Data for Frontend Design
 $reviews = [
     [
@@ -50,34 +51,15 @@ $reviews = [
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased">
 
-    <!-- Navigation -->
-    <nav class="bg-white border-b border-gray-100 fixed w-full z-40">
-        <div class="max-w-7xl mx-auto px-4 lg:px-8">
-            <div class="flex justify-between h-20 items-center">
-                <a href="../../index.php" class="flex items-center gap-2">
-                    <div class="bg-locar-orange text-white w-10 h-10 flex items-center justify-center rounded text-xl font-bold">
-                        <i class="fa-solid fa-car"></i>
-                    </div>
-                    <span class="font-black text-2xl tracking-tighter">Ma<span class="text-locar-orange">Bagnole</span></span>
-                </a>
-                
-                <div class="flex items-center gap-4">
-                    <span class="text-sm font-bold text-gray-500">Bonjour, Ahmed</span>
-                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500">
-                        A
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <?php 
+    $root_path = '../../';
+    include '../header.php'; 
+    ?>
 
-    <div class="pt-20 min-h-screen flex">
+    <div class="pt-20 min-h-screen flex flex-col">
         
-        <!-- Sidebar -->
-        <?php include 'sidebar.php'; ?>
-
         <!-- Main Content -->
-        <main class="flex-1 md:ml-64 p-8">
+        <main class="flex-1 p-8 w-full">
             <div class="max-w-5xl mx-auto">
                 <div class="flex justify-between items-center mb-8">
                     <div>

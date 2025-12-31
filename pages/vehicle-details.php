@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once '../includes/guard.php';
+require_login();
 
 // Get Vehicle ID
 $vehicle_id = isset($_GET['id']) ? (int)$_GET['id'] : 1;

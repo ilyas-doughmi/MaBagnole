@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once '../includes/guard.php';
+require_login();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
