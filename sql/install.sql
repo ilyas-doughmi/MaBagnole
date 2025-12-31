@@ -92,3 +92,8 @@ INSERT INTO vehicle (brand, model, price_per_day, image, is_available, category_
 ('Hyundai', 'Accent', 45.00, 'https://m.psecn.photoshelter.com/img-get2/I0000ZWSA8CHNZok/fit=700', 1, 4),
 ('Kia', 'Rio', 48.00, 'https://cimg2.ibsrv.net/ibimg/hgm/1920x1080-1/100/562/new-kia-rio_100562958.jpg', 1, 4),
 ('Ford', 'Fiesta', 52.00, 'https://cdn.motor1.com/images/mgl/28rKM/s1/ford-fiesta-st-2022.jpg', 1, 4);
+
+
+-- adding admin account
+
+INSERT INTO users(full_name,email,password,role) VALUES('ilyas','admin@gmail.com','$2y$10$V/w4Kt75wQuzokW9HqsRR.8oDRFZCRR7Rzv1AOlLwEBb2KdJyuF5u','admin');
