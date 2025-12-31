@@ -1,8 +1,9 @@
 <?php
 session_start();
-// Mock Data
+require_once(__DIR__. "/../../includes/vehicles/vehicles_data.php");
+
 $stats = [
-    'cars' => 24,
+    'cars' => $vehicles["count"],
     'reservations' => 158,
     'earnings' => '12,450',
     'reviews' => 45
