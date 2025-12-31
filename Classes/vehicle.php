@@ -10,6 +10,13 @@ class vehicle{
     private $isAvailable;
     private $createdAt;
 
+    private $pdo;
+
+    public function __construct($pdo)
+    {
+        $this->pdo = $pdo;
+    }
+
     public function __set($name, $value)
     {
         $this->$name = $value;
@@ -19,4 +26,5 @@ class vehicle{
     {
         return $this->$name;
     }
+
 }
