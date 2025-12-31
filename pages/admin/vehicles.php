@@ -50,10 +50,12 @@ $vehicles_data = $vehicles["vehicles"];
                     <thead>
                         <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 font-bold tracking-wider">
                             <th class="p-4">ID</th>
+                            <th class="p-4">Image</th>
                             <th class="p-4">Marque & Modèle</th>
                             <th class="p-4">Catégorie</th>
                             <th class="p-4">Prix/Jour</th>
                             <th class="p-4">Statut</th>
+                            <th class="p-4">Date Ajout</th>
                             <th class="p-4 text-right">Actions</th>
                         </tr>
                     </thead>
@@ -61,6 +63,9 @@ $vehicles_data = $vehicles["vehicles"];
                         <?php foreach($vehicles_data as $v): ?>
                         <tr class="hover:bg-gray-50 transition">
                             <td class="p-4 font-bold text-gray-500">#<?= $v['vehicle_id'] ?></td>
+                            <td class="p-4">
+                                <img src="<?= $v['image'] ?>" alt="Vehicle" class="w-16 h-10 object-cover rounded-md border border-gray-200">
+                            </td>
                             <td class="p-4 font-bold"><?= $v['brand'] . ' ' . $v['model'] ?></td>
                             <td class="p-4 text-sm"><?= $v['category_name'] ?></td>
                             <td class="p-4 font-bold text-locar-orange"><?= $v['price_per_day'] ?>$</td>
@@ -70,6 +75,7 @@ $vehicles_data = $vehicles["vehicles"];
                                     <?= $v['is_available'] ? 'Disponible' : 'Indisponible' ?>
                                 </span>
                             </td>
+                            <td class="p-4 text-sm text-gray-500"><?= date('d/m/Y', strtotime($v['created_at'])) ?></td>
                             <td class="p-4 text-right space-x-2">
                                 <button class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
                                 <button class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
