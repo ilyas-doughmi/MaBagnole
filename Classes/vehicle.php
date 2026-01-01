@@ -8,6 +8,7 @@ class vehicle{
     private $description;
     private $imagePath;
     private $isAvailable;
+    private $category_id;
     private $createdAt;
 
     private $pdo;
@@ -31,7 +32,9 @@ class vehicle{
     {
         $query = "SELECT v.*, c.category_name 
                   FROM vehicle v 
-                  LEFT JOIN category c ON v.category_id = c.category_id";
+                  LEFT JOIN category c ON v.category_id = c.category_id
+                  ORDER BY v.created_at DESC";
+        
         $stmt = $this->pdo->query($query);
         $stmt->execute();
         $vehicles = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -43,4 +46,69 @@ class vehicle{
         ];
     }
 
+    public function addVehicle()
+    {
+        $query = "INSERT INTO vehicle (brand, model, price_per_day, image, is_available, category_id) 
+                  VALUES (:brand, :model, :price, :image, :available, :category_id)";
+        $stmt = $this->pdo->prepare($query);
+        try {
+            $stmt->execute([
+                ':brand' => $this->brand,
+                ':model' => $this->model,
+                ':price' => $this->pricePerDay,
+                ':image' => $this->imagePath,
+                ':available' => $this->isAvailable ?? 1,
+                ':category_id' => $this->category_id
+            ]);
+            return true;
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    public function getVehicleById($id)
+    {
+        $query = "SELECT * FROM vehicle WHERE vehicle_id = :id";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute([
+            ':id' => $id
+        ]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function updateVehicle($id)
+    {
+        $query = "UPDATE vehicle SET brand = :brand, model = :model, price_per_day = :price, 
+                  image = :image, category_id = :category_id, is_available = :available 
+                  WHERE vehicle_id = :id";
+        $stmt = $this->pdo->prepare($query);
+        try {
+            $stmt->execute([
+                ':brand' => $this->brand,
+                ':model' => $this->model,
+                ':price' => $this->pricePerDay,
+                ':image' => $this->imagePath,
+                ':category_id' => $this->category_id,
+                ':available' => $this->isAvailable,
+                ':id' => $id
+            ]);
+            return true;
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    public function deleteVehicle($id)
+    {
+        $query = "DELETE FROM vehicle WHERE vehicle_id = :id";
+        $stmt = $this->pdo->prepare($query);
+        try {
+            $stmt->execute([
+                ':id' => $id
+            ]);
+            return true;
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
 }
