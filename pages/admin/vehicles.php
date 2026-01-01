@@ -8,6 +8,11 @@ $db = DB::connect();
 $vehicleObj = new vehicle($db);
 $categoryObj = new Category($db);
 
+$edit_vehicle = null;
+if (isset($_GET['edit'])) {
+    $edit_vehicle = $vehicleObj->getVehicleById($_GET['edit']);
+}
+
 $data = $vehicleObj->getVehicles();
 $vehicles_data = $data['vehicles'];
 $categories_data = $categoryObj->getCategories();
@@ -27,7 +32,7 @@ $categories_data = $categoryObj->getCategories();
                 extend: {
                     fontFamily: { sans: ['Outfit', 'sans-serif'] },
                     colors: { 
-                        'locar-orange': '#FF5F00', 
+                        'locar-orange': '#FF3B00', 
                         'locar-black': '#1a1a1a',
                         'locar-dark': '#0f0f0f',
                         'locar-gray': '#f4f4f5'
@@ -68,7 +73,6 @@ $categories_data = $categoryObj->getCategories();
             </div>
 
 
-
             <!-- Vehicle Grid -->
             <?php if (empty($vehicles_data)): ?>
                 <div class="bg-white rounded-2xl p-12 text-center shadow-card">
@@ -96,9 +100,9 @@ $categories_data = $categoryObj->getCategories();
                             
                             <!-- Action Buttons on Hover -->
                             <div class="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
-                                <button class="bg-white text-blue-600 p-2.5 rounded-lg shadow-lg hover:bg-blue-50 transition" title="Éditer">
+                                <a href="?edit=<?= $v['vehicle_id'] ?>" class="bg-white text-blue-600 p-2.5 rounded-lg shadow-lg hover:bg-blue-50 transition" title="Éditer">
                                     <i class="fa-solid fa-pen"></i>
-                                </button>
+                                </a>
                                 <form action="actions/vehicle_action.php" method="POST" onsubmit="return confirm('Supprimer ce véhicule ?');">
                                     <input type="hidden" name="vehicle_id" value="<?= $v['vehicle_id'] ?>">
                                     <button type="submit" name="delete_vehicle" class="bg-white text-red-600 p-2.5 rounded-lg shadow-lg hover:bg-red-50 transition" title="Supprimer">
@@ -124,9 +128,6 @@ $categories_data = $categoryObj->getCategories();
                                         <span class="text-sm font-bold text-gray-500">$</span>
                                     </div>
                                 </div>
-                                <button class="text-gray-400 hover:text-locar-orange transition">
-                                    <i class="fa-solid fa-arrow-right-long text-xl"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -152,58 +153,47 @@ $categories_data = $categoryObj->getCategories();
             </div>
 
             <form action="actions/vehicle_action.php" class="space-y-6" method="POST">
-                <div id="vehicle-entries" class="space-y-8">
-                    <!-- Template Entry -->
-                    <div class="vehicle-entry bg-gray-50/50 p-6 rounded-2xl border border-gray-100 relative group hover:border-locar-orange/30 transition-colors">
-                        <div class="flex justify-between items-center mb-4">
-                            <div class="flex items-center gap-3">
-                                <span class="bg-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-locar-orange shadow-sm border border-gray-100 count-badge">1</span>
-                                <h4 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Informations Véhicule</h4>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                            <div class="space-y-1">
-                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Marque</label>
-                                <input type="text" name="brand[]" placeholder="Ex: Toyota" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Modèle</label>
-                                <input type="text" name="model[]" placeholder="Ex: RAV4" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
-                            </div>
-                        </div>
+                <!-- Single Entry for Add -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Marque</label>
+                        <input type="text" name="brand[]" placeholder="Ex: Toyota" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Modèle</label>
+                        <input type="text" name="model[]" placeholder="Ex: RAV4" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                    </div>
+                </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                            <div class="space-y-1">
-                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Catégorie</label>
-                                <div class="relative">
-                                    <select name="category[]" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition appearance-none cursor-pointer" required>
-                                        <option value="">Sélectionner...</option>
-                                        <?php foreach($categories_data as $cat): ?>
-                                            <option value="<?= $cat['category_id'] ?>"><?= $cat['category_name'] ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
-                                        <i class="fa-solid fa-chevron-down"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Prix par jour</label>
-                                <div class="relative">
-                                    <input type="number" name="price[]" placeholder="0.00" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
-                                    <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">$</div>
-                                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Catégorie</label>
+                        <div class="relative">
+                            <select name="category[]" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition appearance-none cursor-pointer" required>
+                                <option value="">Sélectionner...</option>
+                                <?php foreach($categories_data as $cat): ?>
+                                    <option value="<?= $cat['category_id'] ?>"><?= $cat['category_name'] ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down"></i>
                             </div>
                         </div>
-                        
-                        <div class="space-y-1">
-                            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Image URL</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"><i class="fa-solid fa-link"></i></span>
-                                <input type="url" name="image[]" placeholder="https://example.com/image.jpg" class="w-full p-4 pl-12 bg-white rounded-xl border border-gray-200 font-medium text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
-                            </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Prix par jour</label>
+                        <div class="relative">
+                            <input type="number" name="price[]" placeholder="0.00" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">$</div>
                         </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-400 uppercase ml-1">Image URL</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"><i class="fa-solid fa-link"></i></span>
+                        <input type="url" name="image[]" placeholder="https://example.com/image.jpg" class="w-full p-4 pl-12 bg-white rounded-xl border border-gray-200 font-medium text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
                     </div>
                 </div>
 
@@ -215,6 +205,83 @@ $categories_data = $categoryObj->getCategories();
             </form>
         </div>
     </div>
+
+    <?php if ($edit_vehicle): ?>
+    <div id="editModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="window.location.href='vehicles.php'"></div>
+        <div class="bg-white w-full max-w-3xl rounded-3xl p-8 max-h-[90vh] overflow-y-auto relative shadow-2xl animate-fade-in-up">
+            
+            <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
+                <div>
+                    <h3 class="font-bold text-2xl text-gray-900">Modifier Véhicule</h3>
+                    <p class="text-gray-500 text-sm mt-1">Mise à jour des informations du véhicule.</p>
+                </div>
+                <a href="vehicles.php" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-500 w-10 h-10 rounded-full flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </a>
+            </div>
+
+            <form action="actions/vehicle_action.php" class="space-y-6" method="POST">
+                <input type="hidden" name="vehicle_id" value="<?= $edit_vehicle['vehicle_id'] ?>">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Marque</label>
+                        <input type="text" name="brand" value="<?= htmlspecialchars($edit_vehicle['brand']) ?>" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Modèle</label>
+                        <input type="text" name="model" value="<?= htmlspecialchars($edit_vehicle['model']) ?>" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Catégorie</label>
+                        <div class="relative">
+                            <select name="category" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition appearance-none cursor-pointer" required>
+                                <?php foreach($categories_data as $cat): ?>
+                                    <option value="<?= $cat['category_id'] ?>" <?= $cat['category_id'] == $edit_vehicle['category_id'] ? 'selected' : '' ?>>
+                                        <?= $cat['category_name'] ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-gray-400 uppercase ml-1">Prix par jour</label>
+                        <div class="relative">
+                            <input type="number" name="price" value="<?= htmlspecialchars($edit_vehicle['price_per_day']) ?>" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                            <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">$</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-400 uppercase ml-1">Image URL</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"><i class="fa-solid fa-link"></i></span>
+                        <input type="url" name="image" value="<?= htmlspecialchars($edit_vehicle['image']) ?>" class="w-full p-4 pl-12 bg-white rounded-xl border border-gray-200 font-medium text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                    <input type="checkbox" name="is_available" id="is_available" <?= $edit_vehicle['is_available'] ? 'checked' : '' ?> class="w-5 h-5 text-locar-orange rounded focus:ring-locar-orange border-gray-300">
+                    <label for="is_available" class="font-bold text-gray-700 select-none cursor-pointer">Véhicule disponible</label>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" name="update_vehicle" class="w-full bg-locar-black text-white font-bold py-4 rounded-xl hover:bg-locar-orange shadow-lg hover:shadow-orange-500/30 transition transform hover:-translate-y-0.5">
+                        METTRE À JOUR
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <script>
         function openModal(id) { 
