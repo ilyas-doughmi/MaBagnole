@@ -1,11 +1,11 @@
 <?php
 session_start();
-// Mock Data
-$categories = [
-    ['id' => 1, 'nom' => 'Citadine', 'count' => 12],
-    ['id' => 2, 'nom' => 'SUV', 'count' => 8],
-    ['id' => 3, 'nom' => 'Luxe', 'count' => 4],
-];
+require_once "../../Classes/db.php";
+require_once "../../Classes/Category.php";
+
+$db = DB::connect();
+$categoryObj = new Category($db);
+$categories = $categoryObj->getCategories();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -38,10 +38,7 @@ $categories = [
             <div class="flex justify-between items-center mb-8">
                 <h3 class="text-gray-700 text-3xl font-black uppercase">Catégories</h3>
                 <div class="flex gap-3">
-                    <button class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                        <i class="fa-solid fa-file-import mr-2"></i> Import Masse
-                    </button>
-                    <button class="bg-locar-orange hover:bg-black text-white font-bold py-2 px-4 rounded shadow transition">
+                    <button onclick="openModal('addModal')" class="bg-locar-orange hover:bg-black text-white font-bold py-2 px-4 rounded shadow transition">
                         <i class="fa-solid fa-plus mr-2"></i> Ajouter
                     </button>
                 </div>
@@ -53,6 +50,7 @@ $categories = [
                         <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 font-bold tracking-wider">
                             <th class="p-4">ID</th>
                             <th class="p-4">Nom de la catégorie</th>
+                            <th class="p-4">Description</th>
                             <th class="p-4">Véhicules</th>
                             <th class="p-4 text-right">Actions</th>
                         </tr>
@@ -60,12 +58,16 @@ $categories = [
                     <tbody class="divide-y divide-gray-100">
                         <?php foreach($categories as $c): ?>
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold text-gray-500">#<?= $c['id'] ?></td>
-                            <td class="p-4 font-bold"><?= $c['nom'] ?></td>
+                            <td class="p-4 font-bold text-gray-500">#<?= $c['category_id'] ?></td>
+                            <td class="p-4 font-bold"><?= $c['category_name'] ?></td>
+                            <td class="p-4 text-sm text-gray-600"><?= $c['category_description'] ?></td>
                             <td class="p-4 text-sm text-gray-500"><?= $c['count'] ?> véhicules</td>
-                            <td class="p-4 text-right space-x-2">
+                            <td class="p-4 text-right space-x-2 flex justify-end">
                                 <button class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
-                                <button class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                <form action="actions/category_action.php" method="POST" class="inline" onsubmit="return confirm('Êtes-vous sûr ?');">
+                                    <input type="hidden" name="category_id" value="<?= $c['category_id'] ?>">
+                                    <button type="submit" name="delete_category" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
+                                </form>
                             </td>
                         </tr>
                         <?php endforeach; ?>
@@ -74,5 +76,29 @@ $categories = [
             </div>
         </div>
     </main>
+
+    <!-- Add Modal -->
+    <div id="addModal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-lg rounded-xl p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-black text-xl uppercase">Ajouter une catégorie</h3>
+                <button onclick="closeModal('addModal')" class="text-gray-400 hover:text-black">✕</button>
+            </div>
+            <form action="actions/category_action.php" class="space-y-4" method="POST">
+                <div>
+                    <input type="text" name="category_name" placeholder="Nom de la catégorie" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none" required>
+                </div>
+                <div>
+                    <textarea name="category_description" placeholder="Description" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none h-32"></textarea>
+                </div>
+                <button type="submit" name="add_category" class="w-full bg-locar-orange text-white font-bold py-3 rounded hover:bg-black transition">ENREGISTRER</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
 </body>
 </html>
