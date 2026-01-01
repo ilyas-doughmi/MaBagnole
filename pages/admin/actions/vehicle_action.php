@@ -33,4 +33,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         header("Location: ../vehicles.php");
         exit();
     }
+    if (isset($_POST['update_vehicle'])) {
+        $id = $_POST['vehicle_id'];
+        $vehicle->brand = $_POST['brand'];
+        $vehicle->model = $_POST['model'];
+        $vehicle->pricePerDay = $_POST['price'];
+        $vehicle->category_id = $_POST['category'];
+        $vehicle->imagePath = $_POST['image'];
+        $vehicle->isAvailable = isset($_POST['is_available']) ? 1 : 0;
+
+        $vehicle->updateVehicle($id);
+        header("Location: ../vehicles.php");
+        exit();
+    }
 }
