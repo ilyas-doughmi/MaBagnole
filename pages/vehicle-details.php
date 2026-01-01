@@ -1,47 +1,30 @@
 <?php
 require_once '../includes/guard.php';
+require_once '../Classes/db.php';
+require_once '../Classes/vehicle.php';
+
 require_login();
 
-// Get Vehicle ID
-$vehicle_id = isset($_GET['id']) ? (int)$_GET['id'] : 1;
+$db = DB::connect();
+$vehicleObj = new vehicle($db);
 
-// MOCK DATA: Vehicle Details (Replace with SQL Query)
-// $stmt = $pdo->prepare("SELECT * FROM ListeVehicules WHERE id = ?");
-// $stmt->execute([$vehicle_id]);
-// $vehicle = $stmt->fetch();
-$vehicle = [
-    'id' => $vehicle_id,
-    'marque' => 'Volvo',
-    'modele' => 'V60',
-    'categorie' => 'Confort',
-    'prix_jour' => 75,
-    'image' => 'https://raw.githubusercontent.com/AChaoub/Fil_rouge_2020/master/Public/IMG/Img_voiture/Lexus.png',
-    'carburant' => 'Diesel',
-    'boite' => 'Automatique',
-    'passagers' => 5,
-    'portes' => 4,
-    'bagages' => 3,
-    'description' => 'La Volvo V60 est un break familial polyvalent qui allie confort, sécurité et performance. Idéale pour les longs trajets comme pour la ville, elle offre un espace généreux et des finitions haut de gamme.',
-    'rating' => 4.5,
-    'review_count' => 12
-];
+$vehicle_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+$vehicle = $vehicleObj->getVehicleById($vehicle_id);
 
-// MOCK DATA: Reviews (Replace with SQL Query)
-// $stmt = $pdo->prepare("SELECT * FROM Avis WHERE id_vehicule = ? ORDER BY date_avis DESC");
-$reviews = [
-    ['user' => 'Ahmed Benali', 'note' => 5, 'date' => '12 Déc 2025', 'comment' => 'Service impeccable et voiture très propre. Je recommande vivement !'],
-    ['user' => 'Sarah K.', 'note' => 4, 'date' => '05 Déc 2025', 'comment' => 'Très bonne conduite, mais le GPS n\'était pas à jour.'],
-];
+if (!$vehicle) {
+    header('Location: vehicles.php');
+    exit;
+}
 
 ?>
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $vehicle['marque'] . ' ' . $vehicle['modele'] ?> | MaBagnole</title>
+    <title><?= htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model']) ?> | MaBagnole Premium</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -50,208 +33,218 @@ $reviews = [
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Nunito Sans', 'sans-serif'],
+                        sans: ['Outfit', 'sans-serif'],
                     },
                     colors: {
-                        'locar-orange': '#FF5F00',
-                        'locar-black': '#1a1a1a',
-                        'locar-dark': '#0F0F0F',
-                    },
+                        'brand-orange': '#FF3B00',
+                        'brand-black': '#0a0a0a',
+                        'brand-gray': '#121212',
+                        'surface': '#ffffff',
+                    }
                 }
             }
         }
     </script>
     <style>
-        .glass-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .hero-pattern {
+            background-image: radial-gradient(#FF3B00 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.05;
+        }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased">
+<body class="bg-gray-50 text-brand-black antialiased selection:bg-brand-orange selection:text-white">
 
     <!-- Navigation -->
     <?php $root_path = '../'; include 'header.php'; ?>
 
     <!-- Main Content -->
-    <div class="pt-32 pb-20">
-        <div class="container mx-auto px-4">
+    <div class="pt-32 pb-20 min-h-screen">
+        <div class="container mx-auto px-6">
             
             <!-- Breadcrumb -->
-            <div class="mb-8 text-sm font-bold text-gray-400">
-                <a href="vehicles.php" class="hover:text-locar-orange">Véhicules</a> 
-                <span class="mx-2">/</span> 
-                <span class="text-gray-800"><?= $vehicle['marque'] . ' ' . $vehicle['modele'] ?></span>
-            </div>
+            <nav class="flex mb-8 text-sm font-medium text-gray-400" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="vehicles.php" class="inline-flex items-center hover:text-brand-orange transition">
+                            <i class="fa-solid fa-arrow-left mr-2"></i> Retour à la flotte
+                        </a>
+                    </li>
+                </ol>
+            </nav>
 
             <div class="flex flex-col lg:flex-row gap-12">
                 
                 <!-- Left Column: Images & Details -->
                 <div class="lg:w-2/3">
-                    <!-- Main Image -->
-                    <div class="bg-white rounded-3xl p-8 shadow-xl mb-8 relative overflow-hidden group">
-                        <div class="absolute top-0 right-0 bg-locar-orange text-white font-black text-lg px-6 py-3 rounded-bl-3xl z-10">
-                            <?= $vehicle['categorie'] ?>
-                        </div>
-                        <button class="absolute top-6 left-6 w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-300 hover:text-red-500 shadow-lg transition z-20" title="Ajouter aux favoris">
-                            <i class="fa-solid fa-heart"></i>
-                        </button>
-                        <img src="<?= $vehicle['image'] ?>" class="w-full transform group-hover:scale-105 transition duration-700" alt="Car Image">
+                    <!-- Title Section Mobile -->
+                    <div class="lg:hidden mb-6">
+                        <span class="text-brand-orange font-bold tracking-widest uppercase text-xs mb-2 block"><?= htmlspecialchars($vehicle['category_name']) ?></span>
+                        <h1 class="text-3xl font-black uppercase"><?= htmlspecialchars($vehicle['brand']) ?> <span class="text-gray-500 font-medium"><?= htmlspecialchars($vehicle['model']) ?></span></h1>
                     </div>
 
-                    <!-- Specs Grid -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
-                            <i class="fa-solid fa-gas-pump text-2xl text-locar-orange mb-2"></i>
-                            <p class="text-xs font-bold text-gray-400 uppercase">Carburant</p>
-                            <p class="font-black"><?= $vehicle['carburant'] ?></p>
+                    <!-- Main Image -->
+                    <div class="bg-white rounded-3xl p-2 shadow-xl shadow-brand-black/5 mb-10 overflow-hidden border border-gray-100 relative group">
+                        <div class="relative rounded-2xl overflow-hidden aspect-video bg-gray-100 flex items-center justify-center">
+                            <div class="absolute top-4 left-4 z-20">
+                                <span class="bg-brand-black text-white text-xs font-bold px-4 py-2 rounded-full uppercase tracking-wider shadow-lg">
+                                    <?= htmlspecialchars($vehicle['category_name']) ?>
+                                </span>
+                            </div>
+                            <!-- Availability Badge -->
+                            <div class="absolute top-4 right-4 z-20">
+                                <?php if ($vehicle['is_available']): ?>
+                                    <span class="bg-green-500/90 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1"><i class="fa-solid fa-check"></i> Disponible</span>
+                                <?php else: ?>
+                                    <span class="bg-red-500/90 backdrop-blur text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1"><i class="fa-solid fa-times"></i> Indisponible</span>
+                                <?php endif; ?>
+                            </div>
+
+                            <img src="<?= htmlspecialchars($vehicle['image']) ?>" 
+                                 class="w-full h-full object-cover transform group-hover:scale-105 transition duration-700 ease-in-out" 
+                                 alt="<?= htmlspecialchars($vehicle['brand']) ?>">
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
-                            <i class="fa-solid fa-gears text-2xl text-locar-orange mb-2"></i>
-                            <p class="text-xs font-bold text-gray-400 uppercase">Boite</p>
-                            <p class="font-black"><?= $vehicle['boite'] ?></p>
+                    </div>
+
+                    <!-- Specs Grid (Static for now) -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 hover:border-brand-orange/20 transition-colors">
+                            <div class="w-12 h-12 rounded-full bg-brand-orange/5 flex items-center justify-center text-brand-orange text-xl">
+                                <i class="fa-solid fa-gas-pump"></i>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Carburant</p>
+                                <p class="font-bold text-brand-black">Essence</p>
+                            </div>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
-                            <i class="fa-solid fa-users text-2xl text-locar-orange mb-2"></i>
-                            <p class="text-xs font-bold text-gray-400 uppercase">Passagers</p>
-                            <p class="font-black"><?= $vehicle['passagers'] ?></p>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 hover:border-brand-orange/20 transition-colors">
+                            <div class="w-12 h-12 rounded-full bg-brand-orange/5 flex items-center justify-center text-brand-orange text-xl">
+                                <i class="fa-solid fa-gears"></i>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Boite</p>
+                                <p class="font-bold text-brand-black">Auto</p>
+                            </div>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
-                            <i class="fa-solid fa-suitcase text-2xl text-locar-orange mb-2"></i>
-                            <p class="text-xs font-bold text-gray-400 uppercase">Bagages</p>
-                            <p class="font-black"><?= $vehicle['bagages'] ?></p>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 hover:border-brand-orange/20 transition-colors">
+                            <div class="w-12 h-12 rounded-full bg-brand-orange/5 flex items-center justify-center text-brand-orange text-xl">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Passagers</p>
+                                <p class="font-bold text-brand-black">5 Places</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 hover:border-brand-orange/20 transition-colors">
+                            <div class="w-12 h-12 rounded-full bg-brand-orange/5 flex items-center justify-center text-brand-orange text-xl">
+                                <i class="fa-solid fa-suitcase"></i>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Valises</p>
+                                <p class="font-bold text-brand-black">3 Max</p>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Description -->
-                    <div class="bg-white rounded-2xl p-8 shadow-lg mb-12">
-                        <h3 class="text-2xl font-black uppercase mb-4">Description</h3>
-                        <p class="text-gray-500 leading-relaxed">
-                            <?= $vehicle['description'] ?>
+                    <div class="prose prose-lg max-w-none text-gray-500 mb-16">
+                        <h3 class="text-2xl font-black text-brand-black uppercase mb-6 tracking-tight">À propos du véhicule</h3>
+                        <p>
+                            Découvrez le plaisir de conduire avec notre <?= htmlspecialchars($vehicle['brand'] . ' ' . $vehicle['model']) ?>. 
+                            Alliant confort exceptionnel et design élégant, ce véhicule de la catégorie <?= htmlspecialchars($vehicle['category_name']) ?> 
+                            est le compagnon idéal pour vos déplacements professionnels ou vos escapades le week-end. 
+                            Entretenu méticuleusement par nos experts MaBagnole, il vous garantit sécurité et sérénité sur la route.
                         </p>
                     </div>
 
                     <!-- Reviews Section -->
-                    <div class="bg-white rounded-2xl p-8 shadow-lg">
-                        <div class="flex justify-between items-center mb-8">
-                            <h3 class="text-2xl font-black uppercase">Avis Clients (<?= count($reviews) ?>)</h3>
+                    <div class="border-t border-gray-200 pt-12">
+                        <div class="flex justify-between items-end mb-10">
+                            <h3 class="text-2xl font-black text-brand-black uppercase tracking-tight">Avis Clients (2)</h3>
                             <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-star text-yellow-400"></i>
-                                <span class="font-bold text-xl"><?= $vehicle['rating'] ?></span>
+                                <i class="fa-solid fa-star text-brand-orange"></i>
+                                <span class="font-black text-xl text-brand-black">4.8</span>
+                                <span class="text-sm text-gray-400 font-medium">/ 5</span>
                             </div>
                         </div>
 
-                        <!-- Review List -->
-                        <div class="space-y-8 mb-12">
+                        <div class="grid gap-8">
                             <?php foreach($reviews as $review): ?>
-                            <div class="border-b border-gray-100 pb-8 last:border-0 last:pb-0">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="flex items-center gap-3">
-                                        <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500">
-                                            <?= substr($review['user'], 0, 1) ?>
-                                        </div>
-                                        <div>
-                                            <h5 class="font-bold"><?= $review['user'] ?></h5>
-                                            <p class="text-xs text-gray-400"><?= $review['date'] ?></p>
+                            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <div class="w-10 h-10 bg-brand-black text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                        <?= substr($review['user'], 0, 1) ?>
+                                    </div>
+                                    <div>
+                                        <h5 class="font-bold text-brand-black"><?= $review['user'] ?></h5>
+                                        <div class="flex text-xs text-brand-orange">
+                                            <?php for($i=0; $i<$review['note']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
                                         </div>
                                     </div>
-                                    <div class="text-yellow-400 text-sm">
-                                        <?php for($i=0; $i<$review['note']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
-                                    </div>
+                                    <span class="ml-auto text-xs font-bold text-gray-300 uppercase"><?= $review['date'] ?></span>
                                 </div>
-                                <p class="text-gray-600 text-sm pl-14 mb-3"><?= $review['comment'] ?></p>
-                                <div class="pl-14 flex gap-4 text-xs font-bold text-gray-400">
-                                    <button class="hover:text-green-500 transition"><i class="fa-regular fa-thumbs-up mr-1"></i> Utile (2)</button>
-                                    <button class="hover:text-red-500 transition"><i class="fa-regular fa-thumbs-down mr-1"></i> Pas utile</button>
-                                </div>
+                                <p class="text-gray-600 text-sm leading-relaxed"><?= $review['comment'] ?></p>
                             </div>
                             <?php endforeach; ?>
-                        </div>
-
-                        <!-- Add Review Form -->
-                        <div class="bg-gray-50 rounded-xl p-6">
-                            <h4 class="font-bold uppercase mb-4">Ajouter un avis</h4>
-                            <form action="submit_review.php" method="POST">
-                                <input type="hidden" name="vehicle_id" value="<?= $vehicle['id'] ?>">
-                                <div class="mb-4">
-                                    <label class="block text-xs font-bold text-gray-400 mb-2">NOTE</label>
-                                    <div class="flex gap-2 text-2xl text-gray-300 hover:text-yellow-400 cursor-pointer transition">
-                                        <!-- Simple star rating implementation would go here, using select for now -->
-                                        <select name="rating" class="w-full p-3 bg-white rounded border border-gray-200 font-bold">
-                                            <option value="5">5 - Excellent</option>
-                                            <option value="4">4 - Très bien</option>
-                                            <option value="3">3 - Bien</option>
-                                            <option value="2">2 - Moyen</option>
-                                            <option value="1">1 - Mauvais</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="mb-4">
-                                    <label class="block text-xs font-bold text-gray-400 mb-2">COMMENTAIRE</label>
-                                    <textarea name="comment" rows="3" class="w-full p-3 bg-white rounded border border-gray-200 focus:ring-2 focus:ring-locar-orange outline-none font-bold" placeholder="Partagez votre expérience..."></textarea>
-                                </div>
-                                <button type="submit" class="bg-black text-white font-bold py-3 px-8 rounded hover:bg-locar-orange transition">
-                                    PUBLIER L'AVIS
-                                </button>
-                            </form>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right Column: Reservation Form -->
                 <div class="lg:w-1/3">
-                    <div class="bg-white rounded-2xl shadow-2xl p-8 sticky top-24 border-t-4 border-locar-orange">
-                        <div class="text-center mb-8">
-                            <p class="text-gray-400 font-bold text-sm uppercase mb-1">Prix par jour</p>
-                            <div class="flex items-center justify-center gap-2">
-                                <span class="text-5xl font-black text-locar-orange"><?= $vehicle['prix_jour'] ?>$</span>
+                    <div class="bg-white rounded-3xl shadow-2xl shadow-brand-black/10 p-8 sticky top-24 border border-gray-100">
+                        <div class="mb-8 border-b border-gray-100 pb-8">
+                            <span class="text-brand-orange font-bold tracking-widest uppercase text-xs mb-1 block"><?= htmlspecialchars($vehicle['category_name']) ?></span>
+                            <h2 class="text-3xl font-black uppercase mb-4 leading-none"><?= htmlspecialchars($vehicle['brand']) ?> <span class="text-gray-400"><?= htmlspecialchars($vehicle['model']) ?></span></h2>
+                            
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-5xl font-black text-brand-black"><?= htmlspecialchars($vehicle['price_per_day']) ?></span>
+                                <span class="text-3xl font-bold text-brand-orange">$</span>
+                                <span class="text-gray-400 font-bold ml-1">/ jour</span>
                             </div>
                         </div>
 
-                        <form action="submit_reservation.php" method="POST" class="space-y-4">
-                            <input type="hidden" name="vehicle_id" value="<?= $vehicle['id'] ?>">
+                        <form action="submit_reservation.php" method="POST" class="space-y-6">
+                            <input type="hidden" name="vehicle_id" value="<?= $vehicle['vehicle_id'] ?>">
                             
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Lieu de prise en charge</label>
-                                <select name="lieu" class="w-full p-4 bg-gray-50 rounded-lg font-bold border border-gray-100 focus:border-locar-orange outline-none transition">
-                                    <option>Agence Centre Ville</option>
-                                    <option>Aéroport</option>
-                                    <option>Gare Centrale</option>
-                                </select>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">Dates de location</label>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="bg-gray-50 rounded-xl p-3 border border-gray-100 focus-within:border-brand-orange focus-within:ring-1 focus-within:ring-brand-orange transition-all">
+                                            <span class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Départ</span>
+                                            <input type="date" name="date_debut" required class="w-full bg-transparent font-bold text-sm outline-none text-brand-black">
+                                        </div>
+                                        <div class="bg-gray-50 rounded-xl p-3 border border-gray-100 focus-within:border-brand-orange focus-within:ring-1 focus-within:ring-brand-orange transition-all">
+                                            <span class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Retour</span>
+                                            <input type="date" name="date_fin" required class="w-full bg-transparent font-bold text-sm outline-none text-brand-black">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">Options</label>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition border border-transparent hover:border-gray-200">
+                                            <input type="checkbox" name="options[]" value="gps" class="w-4 h-4 text-brand-orange rounded focus:ring-brand-orange border-gray-300">
+                                            <span class="font-bold text-sm text-gray-600 flex-1">GPS Navigation</span>
+                                            <span class="text-xs font-bold text-brand-black">+10$</span>
+                                        </label>
+                                        <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition border border-transparent hover:border-gray-200">
+                                            <input type="checkbox" name="options[]" value="siege" class="w-4 h-4 text-brand-orange rounded focus:ring-brand-orange border-gray-300">
+                                            <span class="font-bold text-sm text-gray-600 flex-1">Siège Enfant</span>
+                                            <span class="text-xs font-bold text-brand-black">+5$</span>
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Date de départ</label>
-                                <input type="date" name="date_debut" required class="w-full p-4 bg-gray-50 rounded-lg font-bold border border-gray-100 focus:border-locar-orange outline-none transition">
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Date de retour</label>
-                                <input type="date" name="date_fin" required class="w-full p-4 bg-gray-50 rounded-lg font-bold border border-gray-100 focus:border-locar-orange outline-none transition">
-                            </div>
-
-                            <!-- Options (Bonus) -->
-                            <div class="space-y-2">
-                                <label class="block text-xs font-bold text-gray-400 mb-2 uppercase">Options Supplémentaires</label>
-                                <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
-                                    <input type="checkbox" name="options[]" value="gps" class="w-5 h-5 text-locar-orange rounded focus:ring-locar-orange">
-                                    <span class="font-bold text-sm"><i class="fa-solid fa-location-dot mr-2 text-gray-400"></i> GPS (+10$/j)</span>
-                                </label>
-                                <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
-                                    <input type="checkbox" name="options[]" value="siege" class="w-5 h-5 text-locar-orange rounded focus:ring-locar-orange">
-                                    <span class="font-bold text-sm"><i class="fa-solid fa-baby mr-2 text-gray-400"></i> Siège Enfant (+5$/j)</span>
-                                </label>
-                            </div>
-
-                            <!-- Total Calculation Placeholder -->
-                            <div class="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
-                                <span class="font-bold text-gray-500">Total estimé</span>
-                                <span class="font-black text-xl">--- $</span>
-                            </div>
-
-                            <button type="submit" class="w-full bg-locar-orange hover:bg-black text-white font-bold py-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                                RÉSERVER MAINTENANT
+                            <button type="submit" class="w-full bg-brand-black text-white font-black py-5 rounded-xl text-lg hover:bg-brand-orange shadow-xl shadow-brand-orange/20 transition-all duration-300 transform hover:-translate-y-1 block mt-8">
+                                RÉSERVER
                             </button>
                             
-                            <p class="text-center text-xs text-gray-400 font-bold mt-4">
-                                <i class="fa-solid fa-shield-halved mr-1"></i> Paiement sécurisé sur place
+                            <p class="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-lock"></i> Paiement sécurisé
                             </p>
                         </form>
                     </div>
@@ -261,9 +254,10 @@ $reviews = [
         </div>
     </div>
 
-    <footer class="bg-locar-dark text-white py-10 border-t border-gray-800 mt-12">
-        <div class="container mx-auto px-4 text-center">
-            <p class="font-bold tracking-wider text-sm">© 2025 MA BAGNOLE. TOUS DROITS RÉSERVÉS</p>
+    <footer class="bg-brand-black text-white py-12 border-t border-white/5">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-2xl font-black uppercase mb-6 tracking-widest">Ma Bagnole</h2>
+            <p class="text-gray-600 text-xs font-bold tracking-widest uppercase">© 2025 Ma Bagnole Premium. Tous droits réservés.</p>
         </div>
     </footer>
 
