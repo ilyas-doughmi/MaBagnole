@@ -68,7 +68,10 @@ class vehicle{
 
     public function getVehicleById($id)
     {
-        $query = "SELECT * FROM vehicle WHERE vehicle_id = :id";
+        $query = "SELECT v.*, c.category_name 
+                  FROM vehicle v 
+                  LEFT JOIN category c ON v.category_id = c.category_id 
+                  WHERE v.vehicle_id = :id";
         $stmt = $this->pdo->prepare($query);
         $stmt->execute([
             ':id' => $id
