@@ -1,8 +1,16 @@
 <?php
 session_start();
-require_once(__DIR__. "/../../includes/vehicles/vehicles_data.php");
-$vehicles_data = $vehicles["vehicles"];
+require_once "../../Classes/db.php";
+require_once "../../Classes/vehicle.php";
+require_once "../../Classes/Category.php";
 
+$db = DB::connect();
+$vehicleObj = new vehicle($db);
+$categoryObj = new Category($db);
+
+$data = $vehicleObj->getVehicles();
+$vehicles_data = $data['vehicles'];
+$categories_data = $categoryObj->getCategories();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -10,126 +18,213 @@ $vehicles_data = $vehicles["vehicles"];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gérer Véhicules | Admin</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Nunito Sans', 'sans-serif'] },
-                    colors: { 'locar-orange': '#FF5F00', 'locar-black': '#1a1a1a' }
+                    fontFamily: { sans: ['Outfit', 'sans-serif'] },
+                    colors: { 
+                        'locar-orange': '#FF5F00', 
+                        'locar-black': '#1a1a1a',
+                        'locar-dark': '#0f0f0f',
+                        'locar-gray': '#f4f4f5'
+                    },
+                    boxShadow: {
+                        'premium': '0 20px 40px -10px rgba(0,0,0,0.1)',
+                        'card': '0 0 0 1px rgba(0,0,0,0.03), 0 2px 8px rgba(0,0,0,0.04)',
+                    }
                 }
             }
         }
     </script>
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased flex h-screen overflow-hidden">
+<body class="bg-locar-gray text-gray-800 antialiased flex h-screen overflow-hidden">
 
     <!-- Sidebar -->
     <?php include 'sidebar.php'; ?>
 
     <!-- Main Content -->
-    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
-        <div class="container mx-auto px-6 py-8">
-            <div class="flex justify-between items-center mb-8">
-                <h3 class="text-gray-700 text-3xl font-black uppercase">Véhicules</h3>
-                <div class="flex gap-3">
-                    <button onclick="openModal('importModal')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                        <i class="fa-solid fa-file-import mr-2"></i> Import Masse
-                    </button>
-                    <button onclick="openModal('addModal')" class="bg-locar-orange hover:bg-black text-white font-bold py-2 px-4 rounded shadow transition">
-                        <i class="fa-solid fa-plus mr-2"></i> Ajouter
-                    </button>
+    <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50/50">
+        <div class="container mx-auto px-8 py-10">
+            <!-- Header -->
+            <div class="flex justify-between items-end mb-10">
+                <div>
+                    <h2 class="text-4xl font-extrabold text-locar-black tracking-tight mb-2">Flotte de Véhicules</h2>
+                    <p class="text-gray-500 font-medium">Gérez votre inventaire et la disponibilité en temps réel.</p>
                 </div>
+                <button onclick="openModal('addModal')" class="bg-locar-black hover:bg-locar-orange text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex items-center group">
+                    <span class="bg-white/20 p-1 rounded-md mr-3 group-hover:rotate-90 transition-transform"><i class="fa-solid fa-plus text-sm"></i></span>
+                    Ajouter un véhicule
+                </button>
             </div>
 
-            <!-- Table -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 font-bold tracking-wider">
-                            <th class="p-4">ID</th>
-                            <th class="p-4">Image</th>
-                            <th class="p-4">Marque & Modèle</th>
-                            <th class="p-4">Catégorie</th>
-                            <th class="p-4">Prix/Jour</th>
-                            <th class="p-4">Statut</th>
-                            <th class="p-4">Date Ajout</th>
-                            <th class="p-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        <?php foreach($vehicles_data as $v): ?>
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold text-gray-500">#<?= $v['vehicle_id'] ?></td>
-                            <td class="p-4">
-                                <img src="<?= $v['image'] ?>" alt="Vehicle" class="w-16 h-10 object-cover rounded-md border border-gray-200">
-                            </td>
-                            <td class="p-4 font-bold"><?= $v['brand'] . ' ' . $v['model'] ?></td>
-                            <td class="p-4 text-sm"><?= $v['category_name'] ?></td>
-                            <td class="p-4 font-bold text-locar-orange"><?= $v['price_per_day'] ?>$</td>
-                            <td class="p-4">
-                                <span class="px-2 py-1 rounded text-xs font-bold uppercase 
-                                    <?= $v['is_available'] ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' ?>">
+
+
+            <!-- Vehicle Grid -->
+            <?php if (empty($vehicles_data)): ?>
+                <div class="bg-white rounded-2xl p-12 text-center shadow-card">
+                    <div class="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fa-solid fa-car-side text-3xl text-gray-300"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Aucun véhicule trouvé</h3>
+                    <p class="text-gray-500 mb-6">Commencez par ajouter des véhicules à votre flotte.</p>
+                </div>
+            <?php else: ?>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <?php foreach($vehicles_data as $v): ?>
+                    <div class="group bg-white rounded-2xl shadow-card hover:shadow-premium transition-all duration-300 overflow-hidden relative border border-transparent hover:border-gray-100 flex flex-col h-full">
+                        
+                        <!-- Image Container -->
+                        <div class="relative h-56 overflow-hidden bg-gray-100">
+                            <img src="<?= $v['image'] ?>" alt="<?= $v['brand'] ?>" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
+                            <div class="absolute top-4 right-4 z-10">
+                                <span class="px-3 py-1.5 rounded-full text-xs font-bold uppercase shadow-sm tracking-wide backdrop-blur-md
+                                    <?= $v['is_available'] ? 'bg-green-500/90 text-white' : 'bg-red-500/90 text-white' ?>">
                                     <?= $v['is_available'] ? 'Disponible' : 'Indisponible' ?>
                                 </span>
-                            </td>
-                            <td class="p-4 text-sm text-gray-500"><?= date('d/m/Y', strtotime($v['created_at'])) ?></td>
-                            <td class="p-4 text-right space-x-2">
-                                <button class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
-                                <button class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            
+                            <!-- Action Buttons on Hover -->
+                            <div class="absolute bottom-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                                <button class="bg-white text-blue-600 p-2.5 rounded-lg shadow-lg hover:bg-blue-50 transition" title="Éditer">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <form action="actions/vehicle_action.php" method="POST" onsubmit="return confirm('Supprimer ce véhicule ?');">
+                                    <input type="hidden" name="vehicle_id" value="<?= $v['vehicle_id'] ?>">
+                                    <button type="submit" name="delete_vehicle" class="bg-white text-red-600 p-2.5 rounded-lg shadow-lg hover:bg-red-50 transition" title="Supprimer">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Content -->
+                        <div class="p-6 flex-1 flex flex-col">
+                            <div class="flex justify-between items-start mb-2">
+                                <p class="text-xs font-bold text-locar-orange uppercase tracking-wider"><?= $v['category_name'] ?></p>
+                                <p class="text-xs font-medium text-gray-400"><?= date('d M Y', strtotime($v['created_at'])) ?></p>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-4 flex-1"><?= $v['brand'] ?> <span class="text-gray-500 font-semibold"><?= $v['model'] ?></span></h3>
+                            
+                            <div class="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center bg-gray-50/50 -mx-6 -mb-6 px-6 py-4">
+                                <div>
+                                    <p class="text-xs text-gray-400 font-bold uppercase">Prix journalier</p>
+                                    <div class="flex items-baseline gap-1">
+                                        <span class="text-2xl font-black text-locar-black"><?= $v['price_per_day'] ?></span>
+                                        <span class="text-sm font-bold text-gray-500">$</span>
+                                    </div>
+                                </div>
+                                <button class="text-gray-400 hover:text-locar-orange transition">
+                                    <i class="fa-solid fa-arrow-right-long text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
     </main>
 
     <!-- Add Modal -->
-    <div id="addModal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-lg rounded-xl p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-black text-xl uppercase">Ajouter un véhicule</h3>
-                <button onclick="closeModal('addModal')" class="text-gray-400 hover:text-black">✕</button>
+    <div id="addModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="closeModal('addModal')"></div>
+        <div class="bg-white w-full max-w-3xl rounded-3xl p-8 max-h-[90vh] overflow-y-auto relative shadow-2xl transform transition-all scale-100">
+            
+            <div class="flex justify-between items-center mb-8 pb-4 border-b border-gray-100">
+                <div>
+                    <h3 class="font-bold text-2xl text-gray-900">Ajouter des véhicules</h3>
+                    <p class="text-gray-500 text-sm mt-1">Remplissez les informations pour un ou plusieurs véhicules.</p>
+                </div>
+                <button onclick="closeModal('addModal')" class="bg-gray-100 hover:bg-red-50 text-gray-500 hover:text-red-500 w-10 h-10 rounded-full flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
-            <form class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="text" placeholder="Marque" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none">
-                    <input type="text" placeholder="Modèle" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none">
+
+            <form action="actions/vehicle_action.php" class="space-y-6" method="POST">
+                <div id="vehicle-entries" class="space-y-8">
+                    <!-- Template Entry -->
+                    <div class="vehicle-entry bg-gray-50/50 p-6 rounded-2xl border border-gray-100 relative group hover:border-locar-orange/30 transition-colors">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-white w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-locar-orange shadow-sm border border-gray-100 count-badge">1</span>
+                                <h4 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Informations Véhicule</h4>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Marque</label>
+                                <input type="text" name="brand[]" placeholder="Ex: Toyota" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Modèle</label>
+                                <input type="text" name="model[]" placeholder="Ex: RAV4" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Catégorie</label>
+                                <div class="relative">
+                                    <select name="category[]" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition appearance-none cursor-pointer" required>
+                                        <option value="">Sélectionner...</option>
+                                        <?php foreach($categories_data as $cat): ?>
+                                            <option value="<?= $cat['category_id'] ?>"><?= $cat['category_name'] ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+                                        <i class="fa-solid fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-400 uppercase ml-1">Prix par jour</label>
+                                <div class="relative">
+                                    <input type="number" name="price[]" placeholder="0.00" class="w-full p-4 bg-white rounded-xl border border-gray-200 font-bold text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                                    <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 font-bold">$</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-400 uppercase ml-1">Image URL</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"><i class="fa-solid fa-link"></i></span>
+                                <input type="url" name="image[]" placeholder="https://example.com/image.jpg" class="w-full p-4 pl-12 bg-white rounded-xl border border-gray-200 font-medium text-gray-700 outline-none focus:border-locar-orange focus:ring-2 focus:ring-locar-orange/10 transition" required>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <select class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none">
-                        <option>Catégorie...</option>
-                        <option>Citadine</option>
-                        <option>SUV</option>
-                    </select>
-                    <input type="number" placeholder="Prix/Jour" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none">
+
+                <div class="pt-4">
+                    <button type="submit" name="add_vehicle" class="w-full bg-locar-black text-white font-bold py-4 rounded-xl hover:bg-locar-orange shadow-lg hover:shadow-orange-500/30 transition transform hover:-translate-y-0.5">
+                        ENREGISTRER LE VÉHICULE
+                    </button>
                 </div>
-                <button type="submit" class="w-full bg-locar-orange text-white font-bold py-3 rounded hover:bg-black transition">ENREGISTRER</button>
             </form>
         </div>
     </div>
 
-    <!-- Import Modal -->
-    <div id="importModal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-md rounded-xl p-6 text-center">
-            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fa-solid fa-file-csv text-2xl text-green-600"></i>
-            </div>
-            <h3 class="font-black text-xl uppercase mb-2">Importation en masse</h3>
-            <p class="text-gray-500 text-sm mb-6">Sélectionnez un fichier CSV ou JSON pour ajouter plusieurs véhicules.</p>
-            <input type="file" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 mb-6"/>
-            <button class="w-full bg-green-600 text-white font-bold py-3 rounded hover:bg-green-700 transition">IMPORTER</button>
-            <button onclick="closeModal('importModal')" class="mt-3 text-gray-400 text-xs font-bold hover:text-gray-600">ANNULER</button>
-        </div>
-    </div>
-
     <script>
-        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function openModal(id) { 
+            document.getElementById(id).classList.remove('hidden'); 
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal(id) { 
+            document.getElementById(id).classList.add('hidden'); 
+            document.body.style.overflow = 'auto';
+        }
     </script>
 </body>
 </html>
