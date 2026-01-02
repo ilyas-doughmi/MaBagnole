@@ -7,6 +7,16 @@ class client extends user
 {
     private $isActive;
 
+    public function __set($name, $value)
+    {
+        $this->$name = $value;
+    }
+
+    public function __get($name)
+    {
+        return $this->$name;
+    }
+
     public function register()
     {
         $query = "INSERT INTO users(full_name,email,password)
@@ -37,14 +47,14 @@ class client extends user
     }
 
     public function activateUser($id) {
-        $query = "UPDATE users SET is_active = 1 WHERE id = :id";
+        $query = "UPDATE users SET is_active = :isActive WHERE id = :id";
         $stmt = $this->pdo->prepare($query);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([':isActive' => $this->isActive, ':id' => $id]);
     }
 
     public function banUser($id) {
-        $query = "UPDATE users SET is_active = 0 WHERE id = :id";
+        $query = "UPDATE users SET is_active = :isActive WHERE id = :id";
         $stmt = $this->pdo->prepare($query);
-        return $stmt->execute([':id' => $id]);
+        return $stmt->execute([':isActive' => $this->isActive, ':id' => $id]);
     }
 }
