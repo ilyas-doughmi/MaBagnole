@@ -1,11 +1,11 @@
 <?php
 session_start();
-// Mock Data for Clients
-$clients = [
-    ['id' => 1, 'nom' => 'Benali', 'prenom' => 'Ahmed', 'email' => 'ahmed@example.com', 'telephone' => '0612345678', 'statut' => 'Actif', 'inscriptions' => '2024-01-15'],
-    ['id' => 2, 'nom' => 'Dubois', 'prenom' => 'Marie', 'email' => 'marie@example.com', 'telephone' => '0698765432', 'statut' => 'Actif', 'inscriptions' => '2024-02-20'],
-    ['id' => 3, 'nom' => 'Martin', 'prenom' => 'Jean', 'email' => 'jean@example.com', 'telephone' => '0655443322', 'statut' => 'Banni', 'inscriptions' => '2023-11-05'],
-];
+require_once "../../Classes/db.php";
+require_once "../../Classes/client.php";
+
+$db = DB::connect();
+$clientObj = new client($db);
+$clients = $clientObj->getAllClients();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -21,7 +21,7 @@ $clients = [
             theme: {
                 extend: {
                     fontFamily: { sans: ['Nunito Sans', 'sans-serif'] },
-                    colors: { 'locar-orange': '#FF5F00', 'locar-black': '#1a1a1a' }
+                    colors: { 'locar-orange': '#FF3B00', 'locar-black': '#1a1a1a' }
                 }
             }
         }
@@ -49,38 +49,52 @@ $clients = [
                         <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-400 font-bold tracking-wider">
                             <th class="p-4">Nom Complet</th>
                             <th class="p-4">Email</th>
-                            <th class="p-4">Téléphone</th>
                             <th class="p-4">Date Inscription</th>
                             <th class="p-4">Statut</th>
                             <th class="p-4 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <?php foreach($clients as $c): ?>
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-xs">
-                                        <?= substr($c['prenom'], 0, 1) . substr($c['nom'], 0, 1) ?>
+                        <?php if (empty($clients)): ?>
+                            <tr>
+                                <td colspan="5" class="p-4 text-center text-gray-500">Aucun client trouvé.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach($clients as $c): ?>
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="p-4 font-bold">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-xs uppercase">
+                                            <?= substr($c['full_name'], 0, 2) ?>
+                                        </div>
+                                        <?= htmlspecialchars($c['full_name']) ?>
                                     </div>
-                                    <?= $c['prenom'] . ' ' . $c['nom'] ?>
-                                </div>
-                            </td>
-                            <td class="p-4 text-sm text-gray-500"><?= $c['email'] ?></td>
-                            <td class="p-4 text-sm text-gray-500"><?= $c['telephone'] ?></td>
-                            <td class="p-4 text-sm text-gray-500"><?= $c['inscriptions'] ?></td>
-                            <td class="p-4">
-                                <span class="px-2 py-1 rounded text-xs font-bold uppercase 
-                                    <?= $c['statut'] == 'Actif' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' ?>">
-                                    <?= $c['statut'] ?>
-                                </span>
-                            </td>
-                            <td class="p-4 text-right space-x-2">
-                                <button class="text-blue-500 hover:text-blue-700" title="Voir détails"><i class="fa-solid fa-eye"></i></button>
-                                <button class="text-red-500 hover:text-red-700" title="Bannir/Supprimer"><i class="fa-solid fa-ban"></i></button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                                </td>
+                                <td class="p-4 text-sm text-gray-500"><?= htmlspecialchars($c['email']) ?></td>
+                                <td class="p-4 text-sm text-gray-500"><?= date('d M Y', strtotime($c['created_at'])) ?></td>
+                                <td class="p-4">
+                                    <span class="px-2 py-1 rounded text-xs font-bold uppercase 
+                                        <?= $c['is_active'] ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600' ?>">
+                                        <?= $c['is_active'] ? 'Actif' : 'Inactif / Banni' ?>
+                                    </span>
+                                </td>
+                                <td class="p-4 text-right space-x-2">
+                                    <form action="actions/client_action.php" method="POST" class="inline">
+                                        <input type="hidden" name="user_id" value="<?= $c['id'] ?>">
+                                        <?php if ($c['is_active']): ?>
+                                            <button type="submit" name="ban_user" class="text-red-500 hover:text-red-700 font-bold text-xs border border-red-200 bg-red-50 px-3 py-1 rounded transition" onclick="return confirm('Bannir cet utilisateur ?')">
+                                                <i class="fa-solid fa-ban mr-1"></i> BANNIR
+                                            </button>
+                                        <?php else: ?>
+                                            <button type="submit" name="activate_user" class="text-green-500 hover:text-green-700 font-bold text-xs border border-green-200 bg-green-50 px-3 py-1 rounded transition">
+                                                <i class="fa-solid fa-check mr-1"></i> ACTIVER
+                                            </button>
+                                        <?php endif; ?>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
