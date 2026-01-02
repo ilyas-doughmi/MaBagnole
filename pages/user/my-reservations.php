@@ -1,39 +1,13 @@
 <?php
 require_once '../../includes/guard.php';
+require_once '../../Classes/db.php';
+require_once '../../Classes/Reservation.php';
+
 require_login();
-// Mock Data for Reservations
-$reservations = [
-    [
-        'id' => 1023,
-        'vehicle' => 'Volvo V60',
-        'image' => 'https://raw.githubusercontent.com/AChaoub/Fil_rouge_2020/master/Public/IMG/Img_voiture/Lexus.png',
-        'start_date' => '2025-12-20',
-        'end_date' => '2025-12-25',
-        'total_price' => 375,
-        'status' => 'Confirmée',
-        'status_color' => 'green'
-    ],
-    [
-        'id' => 980,
-        'vehicle' => 'BMW X5',
-        'image' => 'https://raw.githubusercontent.com/AChaoub/Fil_rouge_2020/master/Public/IMG/Img_voiture/Lexus.png',
-        'start_date' => '2025-11-10',
-        'end_date' => '2025-11-12',
-        'total_price' => 300,
-        'status' => 'Terminée',
-        'status_color' => 'gray'
-    ],
-    [
-        'id' => 1045,
-        'vehicle' => 'Mercedes C-Class',
-        'image' => 'https://raw.githubusercontent.com/AChaoub/Fil_rouge_2020/master/Public/IMG/Img_voiture/Lexus.png',
-        'start_date' => '2026-01-05',
-        'end_date' => '2026-01-10',
-        'total_price' => 600,
-        'status' => 'En attente',
-        'status_color' => 'yellow'
-    ]
-];
+
+$db = DB::connect();
+$reservationObj = new Reservation($db);
+$reservations = $reservationObj->getReservationsByUserId($_SESSION['id']);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -96,16 +70,35 @@ $reservations = [
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                <?php foreach($reservations as $res): ?>
+                                <?php foreach($reservations as $res): 
+                                    $start = new DateTime($res['start_date']);
+                                    $end = new DateTime($res['end_date']);
+                                    $days = $start->diff($end)->days;
+                                    if ($days < 1) $days = 1;
+                                    $totalPrice = $days * ($res['price_per_day'] ?? 0);
+                                    
+                                    $statusClass = 'bg-yellow-100 text-yellow-600';
+                                    $statusLabel = 'En attente';
+                                    if ($res['reservation_status'] === 'confirmed') {
+                                        $statusClass = 'bg-green-100 text-green-600';
+                                        $statusLabel = 'Confirmée';
+                                    } elseif ($res['reservation_status'] === 'cancelled') {
+                                        $statusClass = 'bg-red-100 text-red-600';
+                                        $statusLabel = 'Annulée';
+                                    } elseif ($res['reservation_status'] === 'completed') {
+                                        $statusClass = 'bg-gray-100 text-gray-500';
+                                        $statusLabel = 'Terminée';
+                                    }
+                                ?>
                                 <tr class="hover:bg-gray-50 transition group">
                                     <td class="p-6">
                                         <div class="flex items-center gap-4">
                                             <div class="w-16 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0">
-                                                <img src="<?= $res['image'] ?>" class="w-full h-full object-cover">
+                                                <img src="<?= htmlspecialchars($res['image'] ?? '') ?>" class="w-full h-full object-cover">
                                             </div>
                                             <div>
-                                                <p class="font-black text-gray-800"><?= $res['vehicle'] ?></p>
-                                                <p class="text-xs text-gray-400 font-bold">#<?= $res['id'] ?></p>
+                                                <p class="font-black text-gray-800"><?= htmlspecialchars($res['brand'] . ' ' . $res['model']) ?></p>
+                                                <p class="text-xs text-gray-400 font-bold">#<?= $res['reservation_id'] ?></p>
                                             </div>
                                         </div>
                                     </td>
@@ -116,25 +109,17 @@ $reservations = [
                                         </div>
                                     </td>
                                     <td class="p-6">
-                                        <span class="font-black text-lg text-locar-orange"><?= $res['total_price'] ?>$</span>
+                                        <span class="font-black text-lg text-locar-orange"><?= number_format($totalPrice, 0) ?>$</span>
                                     </td>
                                     <td class="p-6">
-                                        <?php
-                                            $statusClass = '';
-                                            switch($res['status_color']) {
-                                                case 'green': $statusClass = 'bg-green-100 text-green-600'; break;
-                                                case 'yellow': $statusClass = 'bg-yellow-100 text-yellow-600'; break;
-                                                case 'gray': $statusClass = 'bg-gray-100 text-gray-500'; break;
-                                            }
-                                        ?>
                                         <span class="inline-block px-3 py-1 rounded-full text-xs font-black uppercase <?= $statusClass ?>">
-                                            <?= $res['status'] ?>
+                                            <?= $statusLabel ?>
                                         </span>
                                     </td>
                                     <td class="p-6 text-right">
-                                        <button class="text-gray-400 hover:text-locar-orange transition">
+                                        <a href="../vehicle-details.php?id=<?= $res['vehicle_id'] ?>" class="text-gray-400 hover:text-locar-orange transition">
                                             <i class="fa-solid fa-eye text-lg"></i>
-                                        </button>
+                                        </a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
