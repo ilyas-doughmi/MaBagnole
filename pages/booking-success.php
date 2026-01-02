@@ -53,20 +53,6 @@ require_login();
                     Merci pour votre réservation. Votre demande a été enregistrée avec succès. Vous recevrez bientôt un email de confirmation avec tous les détails.
                 </p>
 
-                <div class="bg-gray-50 rounded-xl p-6 mb-8 border border-gray-100">
-                    <p class="text-xs font-bold text-gray-400 uppercase mb-2">Prochaines étapes</p>
-                    <ul class="text-left text-sm space-y-3">
-                        <li class="flex items-start gap-3">
-                            <i class="fa-solid fa-envelope text-locar-orange mt-1"></i>
-                            <span>Vérifiez votre boîte mail pour la confirmation.</span>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <i class="fa-solid fa-id-card text-locar-orange mt-1"></i>
-                            <span>Préparez votre permis de conduire et votre pièce d'identité pour le retrait.</span>
-                        </li>
-                    </ul>
-                </div>
-
                 <div class="space-y-3">
                     <a href="../index.php" class="block w-full bg-black hover:bg-locar-orange text-white font-bold py-4 rounded-xl shadow-lg transition transform hover:-translate-y-1">
                         RETOUR À L'ACCUEIL
