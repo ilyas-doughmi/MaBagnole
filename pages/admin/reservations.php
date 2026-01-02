@@ -1,11 +1,11 @@
 <?php
 session_start();
-// Mock Data
-$reservations = [
-    ['id' => 1023, 'client' => 'Ahmed Benali', 'vehicule' => 'Volvo V60', 'dates' => '20/12 - 25/12', 'status' => 'Confirmée'],
-    ['id' => 1045, 'client' => 'Sarah K.', 'vehicule' => 'BMW X5', 'dates' => '05/01 - 10/01', 'status' => 'En attente'],
-    ['id' => 980, 'client' => 'John Doe', 'vehicule' => 'Peugeot 208', 'dates' => '10/11 - 12/11', 'status' => 'Annulée'],
-];
+require_once "../../Classes/db.php";
+require_once "../../Classes/Reservation.php";
+
+$db = DB::connect();
+$reservationObj = new Reservation($db);
+$reservations = $reservationObj->getAllReservations();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -21,7 +21,7 @@ $reservations = [
             theme: {
                 extend: {
                     fontFamily: { sans: ['Nunito Sans', 'sans-serif'] },
-                    colors: { 'locar-orange': '#FF5F00', 'locar-black': '#1a1a1a' }
+                    colors: { 'locar-orange': '#FF3B00', 'locar-black': '#1a1a1a' }
                 }
             }
         }
@@ -29,10 +29,8 @@ $reservations = [
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased flex h-screen overflow-hidden">
 
-    <!-- Sidebar -->
     <?php include 'sidebar.php'; ?>
 
-    <!-- Main Content -->
     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
         <div class="container mx-auto px-6 py-8">
             <h3 class="text-gray-700 text-3xl font-black uppercase mb-8">Réservations</h3>
@@ -50,24 +48,47 @@ $reservations = [
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <?php foreach($reservations as $r): ?>
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold text-gray-500">#<?= $r['id'] ?></td>
-                            <td class="p-4 font-bold"><?= $r['client'] ?></td>
-                            <td class="p-4 text-sm"><?= $r['vehicule'] ?></td>
-                            <td class="p-4 text-sm text-gray-500"><?= $r['dates'] ?></td>
-                            <td class="p-4">
-                                <span class="px-2 py-1 rounded text-xs font-bold uppercase 
-                                    <?= $r['status'] == 'Confirmée' ? 'bg-green-100 text-green-600' : ($r['status'] == 'Annulée' ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-600') ?>">
-                                    <?= $r['status'] ?>
-                                </span>
-                            </td>
-                            <td class="p-4 text-right space-x-2">
-                                <button class="text-green-500 hover:text-green-700" title="Confirmer"><i class="fa-solid fa-check"></i></button>
-                                <button class="text-red-500 hover:text-red-700" title="Annuler"><i class="fa-solid fa-xmark"></i></button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                        <?php if (empty($reservations)): ?>
+                            <tr><td colspan="6" class="p-4 text-center text-gray-500">Aucune réservation.</td></tr>
+                        <?php else: ?>
+                            <?php foreach($reservations as $r): 
+                                $statusClass = 'bg-yellow-100 text-yellow-600';
+                                $statusLabel = 'En attente';
+                                if ($r['reservation_status'] === 'confirmed') {
+                                    $statusClass = 'bg-green-100 text-green-600';
+                                    $statusLabel = 'Confirmée';
+                                } elseif ($r['reservation_status'] === 'cancelled') {
+                                    $statusClass = 'bg-red-100 text-red-600';
+                                    $statusLabel = 'Annulée';
+                                } elseif ($r['reservation_status'] === 'completed') {
+                                    $statusClass = 'bg-gray-100 text-gray-500';
+                                    $statusLabel = 'Terminée';
+                                }
+                            ?>
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="p-4 font-bold text-gray-500">#<?= $r['reservation_id'] ?></td>
+                                <td class="p-4">
+                                    <p class="font-bold"><?= htmlspecialchars($r['full_name']) ?></p>
+                                    <p class="text-xs text-gray-400"><?= htmlspecialchars($r['email']) ?></p>
+                                </td>
+                                <td class="p-4 text-sm font-bold"><?= htmlspecialchars($r['brand'] . ' ' . $r['model']) ?></td>
+                                <td class="p-4 text-sm text-gray-500"><?= date('d/m/Y', strtotime($r['start_date'])) ?>  <br> <?= date('d/m/Y', strtotime($r['end_date'])) ?></td>
+                                <td class="p-4">
+                                    <span class="px-2 py-1 rounded text-xs font-bold uppercase <?= $statusClass ?>"><?= $statusLabel ?></span>
+                                </td>
+                                <td class="p-4 text-right space-x-2">
+                                    <form action="actions/reservation_action.php" method="POST" class="inline">
+                                        <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
+                                        <button type="submit" name="confirm_reservation" class="text-green-500 hover:text-green-700" title="Confirmer"><i class="fa-solid fa-check"></i></button>
+                                    </form>
+                                    <form action="actions/reservation_action.php" method="POST" class="inline">
+                                        <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
+                                        <button type="submit" name="cancel_reservation" class="text-red-500 hover:text-red-700" title="Annuler"><i class="fa-solid fa-xmark"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
