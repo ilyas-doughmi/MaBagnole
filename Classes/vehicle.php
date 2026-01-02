@@ -46,6 +46,21 @@ class vehicle{
         ];
     }
 
+    public function searchVehicles($search) {
+        $query = "SELECT v.*, c.category_name 
+                  FROM vehicle v 
+                  LEFT JOIN category c ON v.category_id = c.category_id
+                  WHERE v.brand LIKE :search OR v.model LIKE :search OR c.category_name LIKE :search
+                  ORDER BY v.created_at DESC";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute([':search' => '%' . $search . '%']);
+        $vehicles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return [
+            "vehicles" => $vehicles,
+            "count" => count($vehicles)
+        ];
+    }
+
     public function addVehicle()
     {
         $query = "INSERT INTO vehicle (brand, model, price_per_day, image, is_available, category_id) 
