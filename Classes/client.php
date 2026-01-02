@@ -2,8 +2,11 @@
 
 require_once("user.php");
 
+
 class client extends user
 {
+    private $isActive;
+
     public function register()
     {
         $query = "INSERT INTO users(full_name,email,password)
@@ -23,5 +26,25 @@ class client extends user
         } catch (PDOException $e) {
             return false;
         }
+    }
+
+    public function getAllClients()
+    {
+        $query = "SELECT * FROM users WHERE role != 'admin' ORDER BY created_at DESC";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function activateUser($id) {
+        $query = "UPDATE users SET is_active = 1 WHERE id = :id";
+        $stmt = $this->pdo->prepare($query);
+        return $stmt->execute([':id' => $id]);
+    }
+
+    public function banUser($id) {
+        $query = "UPDATE users SET is_active = 0 WHERE id = :id";
+        $stmt = $this->pdo->prepare($query);
+        return $stmt->execute([':id' => $id]);
     }
 }
