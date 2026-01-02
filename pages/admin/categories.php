@@ -63,7 +63,7 @@ $categories = $categoryObj->getCategories();
                             <td class="p-4 text-sm text-gray-600"><?= $c['category_description'] ?></td>
                             <td class="p-4 text-sm text-gray-500"><?= $c['count'] ?> véhicules</td>
                             <td class="p-4 text-right space-x-2 flex justify-end">
-                                <button class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
+                                <a href="?edit=<?= $c['category_id'] ?>" class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></a>
                                 <form action="actions/category_action.php" method="POST" class="inline" onsubmit="return confirm('Êtes-vous sûr ?');">
                                     <input type="hidden" name="category_id" value="<?= $c['category_id'] ?>">
                                     <button type="submit" name="delete_category" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
@@ -76,6 +76,7 @@ $categories = $categoryObj->getCategories();
             </div>
         </div>
     </main>
+
 
     <!-- Add Modal -->
     <div id="addModal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
@@ -95,6 +96,28 @@ $categories = $categoryObj->getCategories();
             </form>
         </div>
     </div>
+     <!-- Edit Modal -->
+   <?php if (isset($_GET['edit']) && $edit_category = $categoryObj->getCategoryById($_GET['edit'])): ?>
+    <div id="editModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm bg-black/60">
+        <div class="bg-white w-full max-w-lg rounded-xl p-6 shadow-2xl relative">
+            <button onclick="window.location.href='categories.php'" class="absolute top-4 right-4 text-gray-400 hover:text-black">✕</button>
+            <h3 class="font-black text-xl uppercase mb-6">Modifier la catégorie</h3>
+            
+            <form action="actions/category_action.php" class="space-y-4" method="POST">
+                <input type="hidden" name="category_id" value="<?= $edit_category['category_id'] ?>">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nom</label>
+                    <input type="text" name="category_name" value="<?= htmlspecialchars($edit_category['category_name']) ?>" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none focus:border-locar-orange transition" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Description</label>
+                    <textarea name="category_description" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none h-32 focus:border-locar-orange transition"><?= htmlspecialchars($edit_category['category_description']) ?></textarea>
+                </div>
+                <button type="submit" name="update_category" class="w-full bg-locar-black text-white font-bold py-3 rounded hover:bg-locar-orange transition">METTRE À JOUR</button>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <script>
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
