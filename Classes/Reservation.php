@@ -45,4 +45,31 @@ class Reservation {
             return false;
         }
     }
+
+    public function getReservationsByUserId($user_id) {
+        $query = "SELECT reservation.*, vehicle.*
+                  FROM reservation  
+                  JOIN vehicle ON reservation.vehicle_id = vehicle.vehicle_id 
+                  WHERE reservation.user_id = :user_id 
+                  ORDER BY reservation.reservation_date DESC";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute([':user_id' => $user_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getAllReservations() {
+        $query = "SELECT reservation.*, vehicle.brand, vehicle.model, vehicle.image, vehicle.price_per_day, users.full_name, users.email
+                  FROM reservation  
+                  JOIN vehicle ON reservation.vehicle_id = vehicle.vehicle_id 
+                  JOIN users ON reservation.user_id = users.id
+                  ORDER BY reservation.reservation_date DESC";
+        $stmt = $this->pdo->query($query);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function updateStatus($id, $status) {
+        $query = "UPDATE reservation SET reservation_status = :status WHERE reservation_id = :id";
+        $stmt = $this->pdo->prepare($query);
+        return $stmt->execute([':status' => $status, ':id' => $id]);
+    }
 }
