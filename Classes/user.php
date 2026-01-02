@@ -8,7 +8,6 @@ class user
     protected $password;
     protected $role;
     protected $createdAt;
-    protected $isActive;
 
     protected $pdo;
 
