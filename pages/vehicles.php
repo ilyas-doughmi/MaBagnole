@@ -8,7 +8,13 @@ require_login();
 $db = DB::connect();
 $vehicleObj = new vehicle($db);
 
-$data = $vehicleObj->getVehicles();
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+if (!empty($search)) {
+    $data = $vehicleObj->searchVehicles($search);
+} else {
+    $data = $vehicleObj->getVehicles();
+}
 $vehicles = $data['vehicles'];
 ?>
 <!DOCTYPE html>
@@ -73,20 +79,28 @@ $vehicles = $data['vehicles'];
 
     <!-- Filter Bar -->
     <div class="bg-white border-b border-gray-100 sticky top-0 z-40 backdrop-blur-md bg-white/80">
-        <div class="container mx-auto px-6 py-4 overflow-x-auto no-scrollbar">
-            <div class="flex justify-center min-w-max gap-4">
-                <?php
-                $cats = ['all' => 'Tous les modèles', 'Citadine' => 'Citadines', 'Confort' => 'Berlines', 'SUV' => 'SUV & 4x4', 'Luxe' => 'Prestige'];
-                foreach ($cats as $key => $label): 
-                    $isActive = ($key === 'all'); // Default active state visual just for demo since filtering is removed
-                    $btnClass = $isActive 
-                        ? 'bg-brand-black text-white shadow-lg shadow-brand-black/20' 
-                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-brand-black';
-                ?>
-                    <button class="<?= $btnClass ?> px-6 py-3 rounded-full text-sm font-bold transition-all duration-300 transform hover:scale-105">
-                        <?= $label ?>
-                    </button>
-                <?php endforeach; ?>
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <form action="vehicles.php" method="GET" class="w-full md:w-auto">
+                    <div class="relative">
+                        <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" 
+                               placeholder="Rechercher par marque, modèle..." 
+                               class="w-full md:w-80 pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm font-medium outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/20 transition">
+                        <i class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <?php if (!empty($search)): ?>
+                            <a href="vehicles.php" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-orange">
+                                <i class="fa-solid fa-times"></i>
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </form>
+                <div id="filterButtons" class="flex gap-2 overflow-x-auto no-scrollbar">
+                    <button data-category="all" class="filter-btn active bg-brand-black text-white px-4 py-2 rounded-full text-xs font-bold transition whitespace-nowrap">Tous</button>
+                    <button data-category="SUV" class="filter-btn bg-gray-100 text-gray-500 hover:bg-gray-200 px-4 py-2 rounded-full text-xs font-bold transition whitespace-nowrap">SUV</button>
+                    <button data-category="Sedan" class="filter-btn bg-gray-100 text-gray-500 hover:bg-gray-200 px-4 py-2 rounded-full text-xs font-bold transition whitespace-nowrap">Berlines</button>
+                    <button data-category="Luxury" class="filter-btn bg-gray-100 text-gray-500 hover:bg-gray-200 px-4 py-2 rounded-full text-xs font-bold transition whitespace-nowrap">Luxe</button>
+                    <button data-category="Economy" class="filter-btn bg-gray-100 text-gray-500 hover:bg-gray-200 px-4 py-2 rounded-full text-xs font-bold transition whitespace-nowrap">Économique</button>
+                </div>
             </div>
         </div>
     </div>
@@ -104,9 +118,9 @@ $vehicles = $data['vehicles'];
                     <p class="text-gray-500">Notre flotte est actuellement en cours de mise à jour.</p>
                 </div>
             <?php else: ?>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                <div id="vehicleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     <?php foreach ($vehicles as $vehicle): ?>
-                        <div class="group relative bg-white rounded-3xl overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-500 ease-out flex flex-col h-full border border-gray-100">
+                        <div class="vehicle-card group relative bg-white rounded-3xl overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-500 ease-out flex flex-col h-full border border-gray-100" data-category="<?= htmlspecialchars($vehicle['category_name']) ?>">
                             
                             <!-- Image Container -->
                             <div class="relative h-64 overflow-hidden bg-gray-100/50">
@@ -183,5 +197,25 @@ $vehicles = $data['vehicles'];
             <p class="text-gray-600 text-xs font-bold tracking-widest uppercase">© 2025 Ma Bagnole Premium. Tous droits réservés.</p>
         </div>
     </footer>
+<script>
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const category = this.dataset.category;
+        document.querySelectorAll('.filter-btn').forEach(b => {
+            b.classList.remove('active', 'bg-brand-black', 'text-white');
+            b.classList.add('bg-gray-100', 'text-gray-500');
+        });
+        this.classList.add('active', 'bg-brand-black', 'text-white');
+        this.classList.remove('bg-gray-100', 'text-gray-500');
+        document.querySelectorAll('.vehicle-card').forEach(card => {
+            if (category === 'all' || card.dataset.category === category) {
+                card.style.display = 'flex';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
 </body>
 </html>
