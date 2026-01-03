@@ -1,10 +1,11 @@
 <?php
 session_start();
-// Mock Data
-$reviews = [
-    ['id' => 1, 'client' => 'Ahmed Benali', 'vehicule' => 'Volvo V60', 'rating' => 5, 'comment' => 'Super voiture !', 'status' => 'Publié'],
-    ['id' => 2, 'client' => 'Spam User', 'vehicule' => 'BMW X5', 'rating' => 1, 'comment' => 'Buy cheap rolex...', 'status' => 'Masqué'],
-];
+require_once "../../Classes/db.php";
+require_once "../../Classes/Review.php";
+
+$db = DB::connect();
+$reviewObj = new Review($db);
+$reviews = $reviewObj->getAllReviews();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -20,7 +21,7 @@ $reviews = [
             theme: {
                 extend: {
                     fontFamily: { sans: ['Nunito Sans', 'sans-serif'] },
-                    colors: { 'locar-orange': '#FF5F00', 'locar-black': '#1a1a1a' }
+                    colors: { 'locar-orange': '#FF3B00', 'locar-black': '#1a1a1a' }
                 }
             }
         }
@@ -28,10 +29,8 @@ $reviews = [
 </head>
 <body class="bg-gray-50 text-gray-800 antialiased flex h-screen overflow-hidden">
 
-    <!-- Sidebar -->
     <?php include 'sidebar.php'; ?>
 
-    <!-- Main Content -->
     <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
         <div class="container mx-auto px-6 py-8">
             <h3 class="text-gray-700 text-3xl font-black uppercase mb-8">Modération Avis</h3>
@@ -49,26 +48,45 @@ $reviews = [
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <?php foreach($reviews as $r): ?>
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold"><?= $r['client'] ?></td>
-                            <td class="p-4 text-sm text-gray-500"><?= $r['vehicule'] ?></td>
-                            <td class="p-4 text-yellow-500 text-sm">
-                                <?php for($i=0; $i<$r['rating']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
-                            </td>
-                            <td class="p-4 text-sm italic text-gray-600">"<?= $r['comment'] ?>"</td>
-                            <td class="p-4">
-                                <span class="px-2 py-1 rounded text-xs font-bold uppercase 
-                                    <?= $r['status'] == 'Publié' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500' ?>">
-                                    <?= $r['status'] ?>
-                                </span>
-                            </td>
-                            <td class="p-4 text-right space-x-2">
-                                <button class="text-green-500 hover:text-green-700" title="Publier"><i class="fa-solid fa-check"></i></button>
-                                <button class="text-red-500 hover:text-red-700" title="Masquer/Supprimer"><i class="fa-solid fa-trash"></i></button>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
+                        <?php if (empty($reviews)): ?>
+                            <tr><td colspan="6" class="p-4 text-center text-gray-500">Aucun avis.</td></tr>
+                        <?php else: ?>
+                            <?php foreach($reviews as $r): 
+                                $isDeleted = !empty($r['deleted_at']);
+                            ?>
+                            <tr class="hover:bg-gray-50 transition <?= $isDeleted ? 'opacity-50' : '' ?>">
+                                <td class="p-4">
+                                    <p class="font-bold"><?= htmlspecialchars($r['full_name']) ?></p>
+                                    <p class="text-xs text-gray-400"><?= htmlspecialchars($r['email']) ?></p>
+                                </td>
+                                <td class="p-4 text-sm text-gray-500"><?= htmlspecialchars($r['brand'] . ' ' . $r['model']) ?></td>
+                                <td class="p-4 text-yellow-500 text-sm">
+                                    <?php for($i=0; $i<$r['rating']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
+                                </td>
+                                <td class="p-4 text-sm italic text-gray-600 max-w-xs truncate">"<?= htmlspecialchars($r['comment']) ?>"</td>
+                                <td class="p-4">
+                                    <?php if ($isDeleted): ?>
+                                        <span class="px-2 py-1 rounded text-xs font-bold uppercase bg-red-100 text-red-600">Supprimé</span>
+                                    <?php else: ?>
+                                        <span class="px-2 py-1 rounded text-xs font-bold uppercase bg-green-100 text-green-600">Publié</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="p-4 text-right space-x-2">
+                                    <?php if ($isDeleted): ?>
+                                        <form action="actions/review_action.php" method="POST" class="inline">
+                                            <input type="hidden" name="review_id" value="<?= $r['review_id'] ?>">
+                                            <button type="submit" name="restore_review" class="text-green-500 hover:text-green-700" title="Restaurer"><i class="fa-solid fa-rotate-left"></i></button>
+                                        </form>
+                                    <?php else: ?>
+                                        <form action="actions/review_action.php" method="POST" class="inline">
+                                            <input type="hidden" name="review_id" value="<?= $r['review_id'] ?>">
+                                            <button type="submit" name="delete_review" class="text-red-500 hover:text-red-700" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
