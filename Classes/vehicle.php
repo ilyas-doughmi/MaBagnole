@@ -61,6 +61,23 @@ class vehicle{
         ];
     }
 
+    public function getVehiclesPaginated($page, $perPage) {
+        $offset = ($page - 1) * $perPage;
+        $query = "SELECT vehicle.*, category.category_name 
+                  FROM vehicle 
+                  JOIN category ON vehicle.category_id = category.category_id
+                  ORDER BY vehicle.created_at DESC
+                  LIMIT $perPage OFFSET $offset";
+        $stmt = $this->pdo->query($query);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getTotalVehicles() {
+        $query = "SELECT COUNT(*) FROM vehicle";
+        $stmt = $this->pdo->query($query);
+        return $stmt->fetchColumn();
+    }
+
     public function addVehicle()
     {
         $query = "INSERT INTO vehicle (brand, model, price_per_day, image, is_available, category_id) 
