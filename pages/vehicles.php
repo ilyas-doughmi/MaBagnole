@@ -9,13 +9,20 @@ $db = DB::connect();
 $vehicleObj = new vehicle($db);
 
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$perPage = 6;
+
+if ($page < 1) $page = 1;
 
 if (!empty($search)) {
     $data = $vehicleObj->searchVehicles($search);
+    $vehicles = $data['vehicles'];
 } else {
-    $data = $vehicleObj->getVehicles();
+    $vehicles = $vehicleObj->getVehiclesPaginated($page, $perPage);
 }
-$vehicles = $data['vehicles'];
+
+$totalVehicles = $vehicleObj->getTotalVehicles();
+$totalPages = ($totalVehicles / $perPage) + 1;
 ?>
 <!DOCTYPE html>
 <html lang="fr" class="scroll-smooth">
@@ -182,6 +189,28 @@ $vehicles = $data['vehicles'];
                         </div>
                     <?php endforeach; ?>
                 </div>
+            <?php endif; ?>
+
+            <?php if (empty($search) && $totalPages > 1): ?>
+            <div class="flex justify-center items-center gap-2 mt-12">
+                <?php if ($page > 1): ?>
+                    <a href="?page=<?= $page - 1 ?>" class="px-4 py-2 bg-white border border-gray-200 rounded-lg font-bold hover:bg-brand-orange hover:text-white hover:border-brand-orange transition">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </a>
+                <?php endif; ?>
+
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <a href="?page=<?= $i ?>" class="px-4 py-2 rounded-lg font-bold transition <?= $i == $page ? 'bg-brand-black text-white' : 'bg-white border border-gray-200 hover:bg-gray-100' ?>">
+                        <?= $i ?>
+                    </a>
+                <?php endfor; ?>
+
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?= $page + 1 ?>" class="px-4 py-2 bg-white border border-gray-200 rounded-lg font-bold hover:bg-brand-orange hover:text-white hover:border-brand-orange transition">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </a>
+                <?php endif; ?>
+            </div>
             <?php endif; ?>
         </div>
     </section>
