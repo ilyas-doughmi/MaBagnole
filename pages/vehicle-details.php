@@ -2,11 +2,13 @@
 require_once '../includes/guard.php';
 require_once '../Classes/db.php';
 require_once '../Classes/vehicle.php';
+require_once '../Classes/Review.php';
 
 require_login();
 
 $db = DB::connect();
 $vehicleObj = new vehicle($db);
+$reviewObj = new Review($db);
 
 $vehicle_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $vehicle = $vehicleObj->getVehicleById($vehicle_id);
@@ -16,6 +18,7 @@ if (!$vehicle) {
     exit;
 }
 
+$reviews = $reviewObj->getReviewsByVehicleId($vehicle_id);
 ?>
 <!DOCTYPE html>
 <html lang="fr" class="scroll-smooth">
@@ -159,33 +162,57 @@ if (!$vehicle) {
 
                     <!-- Reviews Section -->
                     <div class="border-t border-gray-200 pt-12">
-                        <div class="flex justify-between items-end mb-10">
-                            <h3 class="text-2xl font-black text-brand-black uppercase tracking-tight">Avis Clients (2)</h3>
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-star text-brand-orange"></i>
-                                <span class="font-black text-xl text-brand-black">4.8</span>
-                                <span class="text-sm text-gray-400 font-medium">/ 5</span>
-                            </div>
+                        <h3 class="text-2xl font-black text-brand-black uppercase mb-6">Avis Clients</h3>
+
+                        <!-- Add Review Form -->
+                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm mb-8">
+                            <h4 class="font-bold text-brand-black mb-4">Laisser un avis</h4>
+                            <form action="submit_review.php" method="POST" class="space-y-4">
+                                <input type="hidden" name="vehicle_id" value="<?= $vehicle['vehicle_id'] ?>">
+                                <div class="flex items-center gap-4">
+                                    <label class="text-sm font-bold text-gray-400">Note:</label>
+                                    <select name="rating" required class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 font-bold outline-none focus:border-brand-orange">
+                                        <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                                        <option value="4">⭐⭐⭐⭐ (4)</option>
+                                        <option value="3">⭐⭐⭐ (3)</option>
+                                        <option value="2">⭐⭐ (2)</option>
+                                        <option value="1">⭐ (1)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <textarea name="comment" rows="3" placeholder="Partagez votre expérience..." required
+                                        class="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-brand-orange text-sm"></textarea>
+                                </div>
+                                <button type="submit" class="bg-brand-black text-white font-bold px-6 py-3 rounded-xl hover:bg-brand-orange transition">
+                                    <i class="fa-solid fa-paper-plane mr-2"></i> Envoyer
+                                </button>
+                            </form>
                         </div>
 
-                        <div class="grid gap-8">
-                            <?php foreach($reviews as $review): ?>
-                            <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                                <div class="flex items-center gap-4 mb-4">
-                                    <div class="w-10 h-10 bg-brand-black text-white rounded-full flex items-center justify-center font-bold text-sm">
-                                        <?= substr($review['user'], 0, 1) ?>
-                                    </div>
-                                    <div>
-                                        <h5 class="font-bold text-brand-black"><?= $review['user'] ?></h5>
-                                        <div class="flex text-xs text-brand-orange">
-                                            <?php for($i=0; $i<$review['note']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
+                        <!-- Reviews List -->
+                        <div class="grid gap-6">
+                            <?php if (empty($reviews)): ?>
+                                <p class="text-gray-400 italic">Aucun avis pour ce véhicule. Soyez le premier à laisser un avis !</p>
+                            <?php else: ?>
+                                <?php foreach($reviews as $review): ?>
+                                <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                                    <div class="flex items-center gap-4 mb-4">
+                                        <div class="w-10 h-10 bg-brand-black text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                            <?= strtoupper(substr($review['full_name'], 0, 1)) ?>
                                         </div>
+                                        <div>
+                                            <h5 class="font-bold text-brand-black"><?= htmlspecialchars($review['full_name']) ?></h5>
+                                            <div class="flex text-xs text-brand-orange">
+                                                <?php for($i=0; $i<$review['rating']; $i++) 
+                                                echo '<i class="fa-solid fa-star"></i>'; ?>
+                                            </div>
+                                        </div>
+                                        <span class="ml-auto text-xs font-bold text-gray-300 uppercase"><?= date('d M Y', strtotime($review['review_date'])) ?></span>
                                     </div>
-                                    <span class="ml-auto text-xs font-bold text-gray-300 uppercase"><?= $review['date'] ?></span>
+                                    <p class="text-gray-600 text-sm leading-relaxed"><?= htmlspecialchars($review['comment']) ?></p>
                                 </div>
-                                <p class="text-gray-600 text-sm leading-relaxed"><?= $review['comment'] ?></p>
-                            </div>
-                            <?php endforeach; ?>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
