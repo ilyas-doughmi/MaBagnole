@@ -1,25 +1,21 @@
 <?php
 require_once '../../includes/guard.php';
+require_once '../../Classes/db.php';
+require_once '../../Classes/Review.php';
+
 require_login();
-// Mock Data for Frontend Design
-$reviews = [
-    [
-        'id' => 1,
-        'vehicle' => 'Volvo V60',
-        'image' => 'https://raw.githubusercontent.com/AChaoub/Fil_rouge_2020/master/Public/IMG/Img_voiture/Lexus.png',
-        'date' => '12 Déc 2025',
-        'rating' => 5,
-        'comment' => 'Service impeccable et voiture très propre. Je recommande vivement !'
-    ],
-    [
-        'id' => 2,
-        'vehicle' => 'BMW X5',
-        'image' => 'https://raw.githubusercontent.com/AChaoub/Fil_rouge_2020/master/Public/IMG/Img_voiture/Lexus.png',
-        'date' => '05 Nov 2025',
-        'rating' => 4,
-        'comment' => 'Très bonne conduite, mais le GPS n\'était pas à jour.'
-    ]
-];
+
+$db = DB::connect();
+$reviewObj = new Review($db);
+$reviews = $reviewObj->getReviewsByUserId($_SESSION['id']);
+
+$editReview = null;
+if (isset($_GET['edit'])) {
+    $editReview = $reviewObj->getReviewById($_GET['edit']);
+    if (!$editReview) {
+        $editReview = null;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -36,14 +32,8 @@ $reviews = [
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Nunito Sans', 'sans-serif'],
-                    },
-                    colors: {
-                        'locar-orange': '#FF5F00',
-                        'locar-black': '#1a1a1a',
-                        'locar-dark': '#0F0F0F',
-                    },
+                    fontFamily: { sans: ['Nunito Sans', 'sans-serif'] },
+                    colors: { 'locar-orange': '#FF3B00', 'locar-black': '#1a1a1a' }
                 }
             }
         }
@@ -57,8 +47,6 @@ $reviews = [
     ?>
 
     <div class="pt-20 min-h-screen flex flex-col">
-        
-        <!-- Main Content -->
         <main class="flex-1 p-8 w-full">
             <div class="max-w-5xl mx-auto">
                 <div class="flex justify-between items-center mb-8">
@@ -68,113 +56,89 @@ $reviews = [
                     </div>
                 </div>
 
-                <!-- Reviews List -->
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <?php foreach($reviews as $review): ?>
-                    <div class="p-6 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition group">
-                        <div class="flex flex-col md:flex-row gap-6">
-                            <!-- Vehicle Image -->
-                            <div class="w-full md:w-32 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                                <img src="<?= $review['image'] ?>" class="w-full h-full object-cover">
+                    <?php if (empty($reviews)): ?>
+                        <div class="p-12 text-center">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa-solid fa-star text-2xl text-gray-400"></i>
                             </div>
-
-                            <!-- Content -->
-                            <div class="flex-grow">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div>
-                                        <h3 class="font-black text-lg uppercase"><?= $review['vehicle'] ?></h3>
-                                        <p class="text-xs text-gray-400 font-bold"><?= $review['date'] ?></p>
+                            <h3 class="font-bold text-gray-800 mb-2">Aucun avis</h3>
+                            <p class="text-gray-500 text-sm mb-6">Vous n'avez pas encore laissé d'avis.</p>
+                            <a href="../vehicles.php" class="inline-block bg-black text-white font-bold py-3 px-6 rounded-lg hover:bg-locar-orange transition">
+                                Découvrir nos véhicules
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach($reviews as $review): ?>
+                        <div class="p-6 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition group">
+                            <div class="flex flex-col md:flex-row gap-6">
+                                <div class="flex-grow">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h3 class="font-black text-lg uppercase"><?= htmlspecialchars($review['brand'] . ' ' . $review['model']) ?></h3>
+                                            <p class="text-xs text-gray-400 font-bold"><?= date('d M Y', strtotime($review['review_date'])) ?></p>
+                                        </div>
+                                        <div class="text-yellow-400 text-sm">
+                                            <?php for($i=0; $i<$review['rating']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
+                                        </div>
                                     </div>
-                                    <div class="text-yellow-400 text-sm">
-                                        <?php for($i=0; $i<$review['rating']; $i++) echo '<i class="fa-solid fa-star"></i>'; ?>
-                                    </div>
-                                </div>
-                                
-                                <p class="text-gray-600 text-sm leading-relaxed mb-4">
-                                    "<?= $review['comment'] ?>"
-                                </p>
+                                    
+                                    <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                                        "<?= htmlspecialchars($review['comment']) ?>"
+                                    </p>
 
-                                <!-- Actions -->
-                                <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                    <button onclick="openEditModal(<?= $review['id'] ?>)" class="text-xs font-bold bg-gray-100 hover:bg-black hover:text-white px-4 py-2 rounded transition">
-                                        <i class="fa-solid fa-pen mr-1"></i> MODIFIER
-                                    </button>
-                                    <button onclick="openDeleteModal(<?= $review['id'] ?>)" class="text-xs font-bold bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded transition">
-                                        <i class="fa-solid fa-trash mr-1"></i> SUPPRIMER
-                                    </button>
+                                    <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                        <a href="?edit=<?= $review['review_id'] ?>" class="text-xs font-bold bg-gray-100 hover:bg-black hover:text-white px-4 py-2 rounded transition">
+                                            <i class="fa-solid fa-pen mr-1"></i> MODIFIER
+                                        </a>
+                                        <form action="actions/user_review_action.php" method="POST" class="inline" onsubmit="return confirm('Supprimer cet avis ?');">
+                                            <input type="hidden" name="review_id" value="<?= $review['review_id'] ?>">
+                                            <button type="submit" name="delete_review" class="text-xs font-bold bg-red-50 text-red-500 hover:bg-red-500 hover:text-white px-4 py-2 rounded transition">
+                                                <i class="fa-solid fa-trash mr-1"></i> SUPPRIMER
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
+    <?php if ($editReview): ?>
+    <div id="editModal" class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white w-full max-w-lg rounded-2xl p-8 relative">
-            <button onclick="closeEditModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black">✕</button>
+            <a href="my-reviews.php" class="absolute top-4 right-4 text-gray-400 hover:text-black">✕</a>
             
             <h3 class="font-black text-2xl uppercase mb-6">Modifier l'avis</h3>
             
-            <form class="space-y-4">
+            <form action="actions/user_review_action.php" method="POST" class="space-y-4">
+                <input type="hidden" name="review_id" value="<?= $editReview['review_id'] ?>">
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-2">NOTE</label>
-                    <select class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none focus:border-locar-orange">
-                        <option value="5">5 - Excellent</option>
-                        <option value="4">4 - Très bien</option>
-                        <option value="3">3 - Bien</option>
-                        <option value="2">2 - Moyen</option>
-                        <option value="1">1 - Mauvais</option>
+                    <select name="rating" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none focus:border-locar-orange">
+                        <option value="5" <?= $editReview['rating'] == 5 ? 'selected' : '' ?>>⭐⭐⭐⭐⭐</option>
+                        <option value="4" <?= $editReview['rating'] == 4 ? 'selected' : '' ?>>⭐⭐⭐⭐</option>
+                        <option value="3" <?= $editReview['rating'] == 3 ? 'selected' : '' ?>>⭐⭐⭐</option>
+                        <option value="2" <?= $editReview['rating'] == 2 ? 'selected' : '' ?>>⭐⭐</option>
+                        <option value="1" <?= $editReview['rating'] == 1 ? 'selected' : '' ?>>⭐</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-2">COMMENTAIRE</label>
-                    <textarea rows="4" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none focus:border-locar-orange"></textarea>
+                    <textarea name="comment" rows="4" class="w-full p-3 bg-gray-50 rounded border border-gray-200 font-bold outline-none focus:border-locar-orange"><?= htmlspecialchars($editReview['comment']) ?></textarea>
                 </div>
                 <div class="pt-4 flex gap-3">
-                    <button type="button" onclick="closeEditModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded transition">ANNULER</button>
-                    <button type="submit" class="flex-1 bg-locar-orange hover:bg-black text-white font-bold py-3 rounded transition">ENREGISTRER</button>
+                    <a href="my-reviews.php" class="flex-1 text-center bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded transition">ANNULER</a>
+                    <button type="submit" name="update_review" class="flex-1 bg-locar-orange hover:bg-black text-white font-bold py-3 rounded transition">ENREGISTRER</button>
                 </div>
             </form>
         </div>
     </div>
+    <?php endif; ?>
 
-    <!-- Delete Modal -->
-    <div id="deleteModal" class="fixed inset-0 z-50 hidden bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-md rounded-2xl p-8 text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fa-solid fa-trash text-2xl text-red-500"></i>
-            </div>
-            
-            <h3 class="font-black text-xl uppercase mb-2">Supprimer cet avis ?</h3>
-            <p class="text-gray-500 text-sm mb-8">Cette action est irréversible. L'avis ne sera plus visible sur la page du véhicule.</p>
-            
-            <div class="flex gap-3">
-                <button onclick="closeDeleteModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded transition">NON, GARDER</button>
-                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded transition">OUI, SUPPRIMER</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function openEditModal(id) {
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-        }
-
-        function openDeleteModal(id) {
-            document.getElementById('deleteModal').classList.remove('hidden');
-        }
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').classList.add('hidden');
-        }
-    </script>
 </body>
 </html>
