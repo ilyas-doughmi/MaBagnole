@@ -1,35 +1,24 @@
 <?php
-// pages/submit_review.php
+session_start();
 require_once '../includes/guard.php';
+require_once '../Classes/db.php';
+require_once '../Classes/Review.php';
+
 require_login();
 
-/*
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $db = DB::connect();
+    $review = new Review($db);
+    
+    $review->__set('rating', $_POST['rating']);
+    $review->__set('comment', $_POST['comment']);
+    $review->__set('user_id', $_SESSION['id']);
+    $review->__set('vehicle_id', $_POST['vehicle_id']);
+    
+    if ($review->addReview()) {
+        header("Location: vehicle-details.php?id=" . $_POST['vehicle_id']);
+    } else {
+        header("Location: vehicle-details.php?id=" . $_POST['vehicle_id']);
+    }
     exit();
 }
-*/
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $vehicle_id = $_POST['vehicle_id'];
-    $rating = $_POST['rating'];
-    $comment = $_POST['comment'];
-    $user_id = $_SESSION['user_id'];
-
-    // Database Connection
-    // include '../db.php';
-
-    try {
-        // Insert Review
-        // $stmt = $pdo->prepare("INSERT INTO Avis (id_client, id_vehicule, note, commentaire, date_avis) VALUES (?, ?, ?, ?, NOW())");
-        // $stmt->execute([$user_id, $vehicle_id, $rating, $comment]);
-
-        // Redirect back to vehicle page
-        header("Location: vehicle-details.php?id=" . $vehicle_id . "&review_submitted=1");
-        exit();
-
-    } catch (PDOException $e) {
-        echo "Erreur : " . $e->getMessage();
-    }
-}
-?>
