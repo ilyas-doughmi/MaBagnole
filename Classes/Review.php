@@ -100,4 +100,10 @@ class Review {
         $stmt = $this->pdo->prepare($query);
         return $stmt->execute([':id' => $id]);
     }
+
+    public function getTotalReviews() {
+        $query = "SELECT COUNT(*) FROM review WHERE deleted_at IS NULL";
+        $stmt = $this->pdo->query($query);
+        return $stmt->fetchColumn();
+    }
 }
