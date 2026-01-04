@@ -80,8 +80,13 @@ $reservations = $reservationObj->getReservationsByUserId($_SESSION['id']);
                                     $statusClass = 'bg-yellow-100 text-yellow-600';
                                     $statusLabel = 'En attente';
                                     if ($res['reservation_status'] === 'confirmed') {
-                                        $statusClass = 'bg-green-100 text-green-600';
-                                        $statusLabel = 'Confirmée';
+                                        if (strtotime($res['end_date']) < time()) {
+                                            $statusClass = 'bg-gray-100 text-gray-500';
+                                            $statusLabel = 'Terminée';
+                                        } else {
+                                            $statusClass = 'bg-green-100 text-green-600';
+                                            $statusLabel = 'Confirmée';
+                                        }
                                     } elseif ($res['reservation_status'] === 'cancelled') {
                                         $statusClass = 'bg-red-100 text-red-600';
                                         $statusLabel = 'Annulée';
