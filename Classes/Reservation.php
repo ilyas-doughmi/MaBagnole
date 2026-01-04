@@ -72,4 +72,46 @@ class Reservation {
         $stmt = $this->pdo->prepare($query);
         return $stmt->execute([':status' => $status, ':id' => $id]);
     }
+
+    public function getTotalReservations() {
+        $query = "SELECT COUNT(*) FROM reservation";
+        $stmt = $this->pdo->query($query);
+        return $stmt->fetchColumn();
+    }
+
+    public function calculateEarnings() {
+        $query = "SELECT r.start_date, r.end_date, v.price_per_day
+                  FROM reservation r
+                  JOIN vehicle v ON r.vehicle_id = v.vehicle_id
+                  WHERE r.reservation_status = 'confirmed'";
+        $stmt = $this->pdo->query($query);
+        $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $totalEarnings = 0;
+        foreach ($reservations as $res) {
+            $start = new DateTime($res['start_date']);
+            $end = new DateTime($res['end_date']);
+            $diff = $start->diff($end);
+            $days = $diff->days;
+            if ($days == 0) $days = 1; 
+            $totalEarnings += $days * $res['price_per_day'];
+        }
+        return $totalEarnings;
+    }
+
+    public function isVehicleAvailable($vehicle_id, $start_date, $end_date) {
+        $query = "SELECT COUNT(*) FROM reservation 
+                  WHERE vehicle_id = :vehicle_id 
+                  AND reservation_status = 'confirmed' 
+                  AND (
+                      (start_date <= :end_date AND end_date >= :start_date)
+                  )";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->execute([
+            ':vehicle_id' => $vehicle_id,
+            ':start_date' => $start_date,
+            ':end_date' => $end_date
+        ]);
+        return $stmt->fetchColumn() == 0;
+    }
 }
