@@ -1,12 +1,20 @@
 <?php
 session_start();
-require_once(__DIR__. "/../../includes/vehicles/vehicles_data.php");
+require_once '../../Classes/db.php';
+require_once '../../Classes/vehicle.php';
+require_once '../../Classes/Reservation.php';
+require_once '../../Classes/Review.php';
+
+$db = DB::connect();
+$vehicleObj = new vehicle($db);
+$reservationObj = new Reservation($db);
+$reviewObj = new Review($db);
 
 $stats = [
-    'cars' => $vehicles["count"],
-    'reservations' => 158,
-    'earnings' => '12,450',
-    'reviews' => 45
+    'cars' => $vehicleObj->getTotalVehicles(),
+    'reservations' => $reservationObj->getTotalReservations(),
+    'earnings' => number_format($reservationObj->calculateEarnings(), 2),
+    'reviews' => $reviewObj->getTotalReviews()
 ];
 ?>
 <!DOCTYPE html>
