@@ -21,8 +21,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $vehicle = $vehicleObj->getVehicleById($vehicle_id);
     $pricePerDay = $vehicle['price_per_day'];
 
+    $today = new DateTime();
+    $today->setTime(0, 0, 0); 
     $start = new DateTime($date_debut);
     $end = new DateTime($date_fin);
+
+    if ($start < $today) {
+        header("Location: vehicle-details.php?id=$vehicle_id&error=past_date");
+        exit();
+    }
+
+    if ($start > $end) {
+        header("Location: vehicle-details.php?id=$vehicle_id&error=invalid_dates");
+        exit();
+    }
+
     $diff = $start->diff($end);
     $days = $diff->days;
     if ($days < 1) $days = 1; 
@@ -31,6 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
     $reservation = new Reservation($db);
+    
+    if (!$reservation->isVehicleAvailable($vehicle_id, $date_debut, $date_fin)) {
+        header("Location: vehicle-details.php?id=$vehicle_id&error=unavailable");
+        exit();
+    }
+
     $reservation->user_id = $user_id;
     $reservation->vehicle_id = $vehicle_id;
     $reservation->start_date = $date_debut;
