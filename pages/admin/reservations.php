@@ -54,9 +54,17 @@ $reservations = $reservationObj->getAllReservations();
                             <?php foreach($reservations as $r): 
                                 $statusClass = 'bg-yellow-100 text-yellow-600';
                                 $statusLabel = 'En attente';
+                                $isFinished = false;
+
                                 if ($r['reservation_status'] === 'confirmed') {
-                                    $statusClass = 'bg-green-100 text-green-600';
-                                    $statusLabel = 'Confirmée';
+                                    if (strtotime($r['end_date']) < time()) {
+                                        $statusClass = 'bg-gray-100 text-gray-500';
+                                        $statusLabel = 'Terminée';
+                                        $isFinished = true;
+                                    } else {
+                                        $statusClass = 'bg-green-100 text-green-600';
+                                        $statusLabel = 'Confirmée';
+                                    }
                                 } elseif ($r['reservation_status'] === 'cancelled') {
                                     $statusClass = 'bg-red-100 text-red-600';
                                     $statusLabel = 'Annulée';
@@ -77,6 +85,7 @@ $reservations = $reservationObj->getAllReservations();
                                     <span class="px-2 py-1 rounded text-xs font-bold uppercase <?= $statusClass ?>"><?= $statusLabel ?></span>
                                 </td>
                                 <td class="p-4 text-right space-x-2">
+                                    <?php if (!$isFinished && $r['reservation_status'] !== 'cancelled'): ?>
                                     <form action="actions/reservation_action.php" method="POST" class="inline">
                                         <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
                                         <button type="submit" name="confirm_reservation" class="text-green-500 hover:text-green-700" title="Confirmer"><i class="fa-solid fa-check"></i></button>
@@ -85,6 +94,7 @@ $reservations = $reservationObj->getAllReservations();
                                         <input type="hidden" name="reservation_id" value="<?= $r['reservation_id'] ?>">
                                         <button type="submit" name="cancel_reservation" class="text-red-500 hover:text-red-700" title="Annuler"><i class="fa-solid fa-xmark"></i></button>
                                     </form>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                             <?php endforeach; ?>
