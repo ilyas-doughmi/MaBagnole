@@ -232,6 +232,24 @@ $reviews = $reviewObj->getReviewsByVehicleId($vehicle_id);
                         </div>
 
                         <form action="submit_reservation.php" method="POST" class="space-y-6">
+                            <?php if (isset($_GET['error'])): ?>
+                                <?php if ($_GET['error'] === 'unavailable'): ?>
+                                    <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
+                                        <i class="fa-solid fa-circle-exclamation"></i>
+                                        Ce véhicule n'est pas disponible pour ces dates.
+                                    </div>
+                                <?php elseif ($_GET['error'] === 'past_date'): ?>
+                                    <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
+                                        <i class="fa-solid fa-calendar-xmark"></i>
+                                        Vous ne pouvez pas réserver dans le passé.
+                                    </div>
+                                <?php elseif ($_GET['error'] === 'invalid_dates'): ?>
+                                    <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-2">
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                        La date de retour doit être après la date de départ.
+                                    </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
                             <input type="hidden" name="vehicle_id" value="<?= $vehicle['vehicle_id'] ?>">
                             
                             <div class="space-y-4">
@@ -240,11 +258,11 @@ $reviews = $reviewObj->getReviewsByVehicleId($vehicle_id);
                                     <div class="grid grid-cols-2 gap-3">
                                         <div class="bg-gray-50 rounded-xl p-3 border border-gray-100 focus-within:border-brand-orange focus-within:ring-1 focus-within:ring-brand-orange transition-all">
                                             <span class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Départ</span>
-                                            <input type="date" name="date_debut" required class="w-full bg-transparent font-bold text-sm outline-none text-brand-black">
+                                            <input type="date" name="date_debut" required min="<?= date('Y-m-d') ?>" class="w-full bg-transparent font-bold text-sm outline-none text-brand-black">
                                         </div>
                                         <div class="bg-gray-50 rounded-xl p-3 border border-gray-100 focus-within:border-brand-orange focus-within:ring-1 focus-within:ring-brand-orange transition-all">
                                             <span class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Retour</span>
-                                            <input type="date" name="date_fin" required class="w-full bg-transparent font-bold text-sm outline-none text-brand-black">
+                                            <input type="date" name="date_fin" required min="<?= date('Y-m-d') ?>" class="w-full bg-transparent font-bold text-sm outline-none text-brand-black">
                                         </div>
                                     </div>
                                 </div>
